@@ -96,6 +96,11 @@ input,textarea,select{
 select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-faint) 50%),linear-gradient(135deg,var(--ink-faint) 50%,transparent 50%);background-position:calc(100% - 18px) 22px,calc(100% - 13px) 22px;background-size:5px 5px;background-repeat:no-repeat}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--celadon-deep);outline-offset:-2px}
 textarea{resize:vertical;line-height:1.65}
+.wfull{
+  width:100%;box-sizing:border-box;display:block;
+  -webkit-appearance:none;appearance:none;
+  min-height:52px;text-align:left;
+}
 label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-faint);margin:0 0 6px;font-family:var(--serif)}
 .mt{margin-top:14px}
 
@@ -341,6 +346,11 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 .lnk.edit{color:var(--celadon-deep)}
 .lnk.arm{color:var(--seal)}
 
+.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.catgrid .chip{
+  width:100%;border-radius:3px;min-height:50px;padding:0 6px;
+  display:flex;align-items:center;justify-content:center;white-space:nowrap;
+}
 .chip.sg{
   height:auto;min-height:0;padding:9px 15px;border-radius:11px;text-align:left;
   line-height:1.45;font-size:16.5px;white-space:normal;
@@ -481,7 +491,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
   /* 남은칸 격자 넉넉히 */
   .grid{grid-template-columns:repeat(14,1fr)}
   /* 일지: 입력과 목록 나란히 */
-  .logcols{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  .logcols{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
   #logListHead{margin-top:0!important}
   /* 좌석 칸 이름 크게 */
   .st .nmt{font-size:14px}
@@ -545,11 +555,11 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       <div>
 
       <label class="f" for="logWhen">언제</label>
-      <input type="datetime-local" id="logWhen">
+      <input type="datetime-local" id="logWhen" class="wfull">
 
       <div class="mt">
         <label class="f">분류</label>
-        <div class="chips" id="logCats"></div>
+        <div class="catgrid" id="logCats"></div>
       </div>
 
       <div class="mt">
