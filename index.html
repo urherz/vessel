@@ -31,6 +31,14 @@ body{
 p,h1,h2,li,div,span,input,textarea,button{word-break:keep-all;overflow-wrap:break-word}
 button{touch-action:manipulation;font-family:var(--sans)}
 .wrap{max-width:560px;margin:0 auto;padding:0 18px}
+@media (min-width:700px){
+  .wrap{max-width:760px;padding:0 32px}
+  nav .inner{max-width:760px}
+}
+@media (min-width:1000px){
+  .wrap{max-width:920px}
+  nav .inner{max-width:920px}
+}
 
 /* header */
 header{position:relative;padding:calc(env(safe-area-inset-top,0px) + 20px) 0 14px;border-bottom:1px solid var(--rule);overflow:hidden}
@@ -458,6 +466,26 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 @media (min-width:600px){
   .grid{grid-template-columns:repeat(10,1fr)}
 }
+@media (min-width:700px){
+  /* 오늘: 기력 칸 2열 */
+  #bands{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .band{margin-bottom:0}
+  /* 대응 카드 2열 */
+  #cardList{display:grid;grid-template-columns:1fr 1fr;gap:11px;align-items:start}
+  .tcard{margin-bottom:0}
+  /* 리듬 그래프 카드 2열 */
+  #p-rhythm .card{margin-bottom:12px}
+  .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .rgrid .card{margin-bottom:0}
+  /* 남은칸 격자 넉넉히 */
+  .grid{grid-template-columns:repeat(14,1fr)}
+  /* 일지: 입력과 목록 나란히 */
+  .logcols{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  #logListHead{margin-top:0!important}
+  /* 좌석 칸 이름 크게 */
+  .st .nmt{font-size:14px}
+  .st .spk{width:21px;height:21px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -512,6 +540,8 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
     
       <h2 class="sec">업무 일지</h2>
       <p class="lede">한 번 있었던 일을 적어두면, 두 번째부터는 카드가 됩니다.</p>
+      <div class="logcols">
+      <div>
 
       <label class="f" for="logWhen">언제</label>
       <input type="datetime-local" id="logWhen">
@@ -532,9 +562,12 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       </div>
 
       <div class="mt"><button class="act" id="logSave">저장</button></div>
-
-      <p class="eyebrow" style="margin-top:30px">지난 일지</p>
+      </div>
+      <div>
+      <p class="eyebrow" style="margin-top:30px" id="logListHead">지난 일지</p>
       <div id="logList"></div>
+      </div>
+      </div>
     
   </section>
 
@@ -707,9 +740,11 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
     <h2 class="sec" style="margin-top:32px">패턴</h2>
     <p class="lede">요일별로, 그리고 무엇을 한 날에 에너지가 어떠했는지.</p>
-    <div class="card"><p class="eyebrow">요일별</p><div id="byDay"></div></div>
-    <div class="card"><p class="eyebrow">당직 다음 날은 어떤가</p><div id="byDuty"></div></div>
-    <div class="card"><p class="eyebrow">무엇 뒤에 소모되는가</p><div id="byTag"></div></div>
+    <div class="rgrid">
+      <div class="card"><p class="eyebrow">요일별</p><div id="byDay"></div></div>
+      <div class="card"><p class="eyebrow">당직 다음 날은 어떤가</p><div id="byDuty"></div></div>
+      <div class="card"><p class="eyebrow">무엇 뒤에 소모되는가</p><div id="byTag"></div></div>
+    </div>
     </div>
 
     
