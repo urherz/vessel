@@ -362,6 +362,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 }
 .ed-head span{font-family:var(--serif);font-size:16px;font-weight:500;letter-spacing:.04em}
 .ed-head button{background:none;border:0;font-size:15px;cursor:pointer;color:var(--ink-soft);min-height:44px;padding:0 2px}
+.ed-head .backarrow{font-size:22px;line-height:1;padding:0 10px 0 0;color:var(--ink)}
 .ed-head button.pr{color:var(--seal);font-weight:500}
 .ed-head .del-h{color:var(--seal);font-size:16.5px}
 .vrow{border:1px solid var(--rule);border-radius:3px;padding:12px;margin-bottom:10px;background:#FBFAF6}
@@ -641,7 +642,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
     <div id="seatSetup" hidden>
       <div class="ed-head">
-        <button id="setupBack">닫기</button>
+        <button id="setupBack" class="backarrow" aria-label="뒤로">←</button>
         <span id="setupTitle">반 설정</span>
         <button class="del-h" id="clsDel" hidden>지우기</button>
         <span class="del-sp" id="clsDelSp" style="width:44px"></span>
@@ -702,7 +703,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
     <div id="seatDetail" hidden>
       <div class="ed-head">
-        <button id="detailBack">닫기</button>
+        <button id="detailBack" class="backarrow" aria-label="뒤로">←</button>
         <span id="detailName">학생</span>
         <span style="width:44px"></span>
       </div>
@@ -1833,10 +1834,8 @@ function renderDetail(){
         ${st.ph?`<button class="lnk" id="phDel">사진 지우기</button>`:''}
       </div>
     </div>
-    <p class="eyebrow" style="margin-top:22px">눌러서 골라 담기</p>
-    <div class="qm" id="quick">${QUICK.map(q=>`<button data-q="${q}" aria-pressed="false">${q}</button>`).join('')}</div>
+    <div class="qm" id="quick" style="margin-top:22px">${QUICK.map(q=>`<button data-q="${q}" aria-pressed="false">${q}</button>`).join('')}</div>
     <div class="mt">
-      <label class="f" for="noteIn">직접 쓰기</label>
       <textarea id="noteIn" rows="2" placeholder="한 줄이면 충분합니다"></textarea>
       <div class="mt"><button class="act" id="noteAdd">저장</button></div>
       <label class="phbtn" for="notePh" style="margin-top:14px">활동지 사진 붙이기
@@ -1949,7 +1948,8 @@ async function setPhoto(dataUrl){
   catch(e){toast('사진을 저장하지 못했습니다');return}
   st.ph=id;
   try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
-  renderDetail();toast('사진을 넣었습니다');
+  toast('사진을 넣었습니다');
+  $('#seatDetail').hidden=true;$('#seatBrowse').hidden=false;renderSeat();window.scrollTo(0,0);
 }
 
 function buildRhythm(){
