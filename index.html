@@ -1869,7 +1869,7 @@ function renderDetail(){
   };
   $('#notePh').onchange=e=>{
     const f=e.target.files[0];if(!f)return;
-    shrink(f,340,440,0.55,d=>{
+    shrink(f,700,900,0.62,d=>{
       pendPh=d;
       $('#notePhPrev').innerHTML=`<img src="${d}" class="nph">
         <button class="lnk" id="notePhX" style="width:100%">사진 빼기</button>`;
@@ -1924,13 +1924,13 @@ function loadPhoto(file){
     const img=new Image();
     img.onerror=()=>toast('이 형식은 지원되지 않습니다');
     img.onload=()=>{
-      const W=96,H=128,cv=document.createElement('canvas');
+      const W=240,H=320,cv=document.createElement('canvas');
       cv.width=W;cv.height=H;
       const x=cv.getContext('2d');
       const s=Math.max(W/img.width,H/img.height);
       const w=img.width*s,h=img.height*s;
       x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
-      setPhoto(cv.toDataURL('image/jpeg',0.7));
+      setPhoto(cv.toDataURL('image/jpeg',0.78));
     };
     img.src=r.result;
   };
