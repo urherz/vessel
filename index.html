@@ -133,13 +133,13 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   text-align:center;font-family:var(--serif);font-size:12px;letter-spacing:.3em;
   color:var(--ink-faint);border-top:1px solid var(--rule);padding-top:9px;margin-top:12px;
 }
-.seats{display:grid;gap:6px}
+.seats{display:grid;gap:6px;align-items:start}
 .st{
-  border:1px solid var(--rule);border-radius:3px;background:#FBFAF6;
-  cursor:pointer;position:relative;overflow:hidden;padding:0;display:flex;
+  border:0;background:none;
+  cursor:pointer;position:relative;overflow:visible;padding:0;display:flex;
   flex-direction:column;
 }
-.st.off{border:0;background:none;cursor:default;position:relative}
+.st.off{border:0;background:none;cursor:default;position:relative;width:100%;height:100%}
 .st.off .stimg{display:none}
 .st.off .nmx{display:none}
 .st.off.vgap::before{
@@ -153,19 +153,21 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   background:repeating-linear-gradient(to right,var(--rule) 0 3px,transparent 3px 7px);
 }
 .stimg{
-  aspect-ratio:3/4;position:relative;overflow:hidden;width:100%;
-  background:none;display:block;flex:none;
+  position:relative;overflow:hidden;
+  background:#FBFAF6;border:1px solid var(--rule);border-radius:3px;
+  display:block;
 }
 .st.hasph .stimg{background:var(--paper-2)}
-.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .st .nmx{
-  flex:none;width:100%;border-top:1px solid var(--rule);position:relative;
-  padding:4px 1px;background:#FBFAF6;color:var(--ink);
+  flex:none;width:100%;position:relative;border:0;background:none;
+  padding:3px 0 0;color:var(--ink);
   display:flex;align-items:center;justify-content:center;
 }
 .st .nmt{
-  width:100%;font-size:clamp(8px,2.7vw,12px);line-height:1.3;letter-spacing:-.06em;
-  white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:center;
+  width:100%;font-family:var(--serif);font-size:11.5px;font-weight:500;
+  line-height:1.3;letter-spacing:-.04em;
+  white-space:nowrap;overflow:hidden;text-align:center;
 }
 .st .spk{
   position:absolute;top:3px;left:3px;z-index:3;
@@ -189,13 +191,30 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st .ar.r{right:1px}
 .st .ar.l{left:1px}
 .st .ar.c{left:50%;transform:translateX(-50%)}
-.st.mark{border-color:var(--celadon-deep)}
+.seatwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+.st.wide,.st.talld{width:100%;height:100%;justify-content:flex-end}
+.st.wide .stimg{width:120px;height:80px;flex:none;margin:0 auto}
+.st.talld .stimg{width:80px;height:120px;flex:none;margin:0 auto}
+.st.talld.fr .stimg{margin:0 0 0 auto}
+.st.talld.fl .stimg{margin:0 auto 0 0}
+.st.nu{flex-direction:column-reverse;justify-content:flex-start}
+.st.nu .nmx{padding:0 0 3px}
+.st.pl .nmx{justify-content:flex-start}
+.st.pl .nmt{text-align:left;padding-left:0}
+.st.pr2 .nmx{justify-content:flex-end}
+.st.pr2 .nmt{text-align:right;padding-right:0}
+
+.st.mark .stimg{border-color:var(--celadon-deep)}
 .st.empty .nmx{color:var(--ink-faint)}
 
 .sp{
   aspect-ratio:3/4;border:1px solid var(--rule);border-radius:3px;background:#FBFAF6;
   cursor:pointer;font-size:14px;color:var(--ink-faint);
 }
+.sp b{font-weight:500;font-size:11px;line-height:1.35;letter-spacing:-.02em;display:block}
+.sp .tc{color:var(--ink-faint)}
+.sp .fc{color:#F4F5F1}
+.sp:has(.fc){background:var(--celadon-deep);border-color:var(--celadon-deep)}
 .sp.off{background:var(--paper-2);border-style:dashed;color:var(--ink-faint);font-size:12px}
 
 .qm{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
@@ -361,6 +380,15 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 }
 .disclose span{font-family:var(--serif);font-size:16.5px;letter-spacing:.06em;color:var(--ink)}
 .disclose em{font-style:normal;font-size:13.5px;color:var(--ink-faint);display:flex;align-items:center;gap:9px}
+.grpdisc{
+  border:1px solid var(--rule);border-radius:3px;margin-bottom:10px;
+  background:#FBF9F0;
+}
+.grpdisc em::after{
+  font-size:48px!important;color:var(--celadon-deep);
+  width:52px;height:52px;line-height:52px;text-align:center;
+  display:block;transform-origin:center;
+}
 .disclose em::after{content:"▾";font-size:16px;transition:transform .2s}
 .disclose[aria-expanded="true"] em::after{transform:rotate(180deg)}
 
@@ -632,7 +660,6 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
   <section id="p-seat" class="panel" hidden>
     <div id="seatBrowse">
       <h2 class="sec">좌석표</h2>
-      <p class="lede">수업 중에는 누르기만. 읽는 건 나중에.</p>
       <div class="filters" id="clsTabs"></div>
       <div id="seatMain"></div>
       <div class="card" style="margin-top:22px">
@@ -671,7 +698,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       </div>
       <div class="mt">
         <label class="f">모둠 모양</label>
-        <button class="disclose" id="grpToggle" aria-expanded="false" style="border:1px solid var(--rule);border-radius:3px;margin-bottom:10px">
+        <button class="disclose grpdisc" id="grpToggle" aria-expanded="false">
           <span>모둠 나누기</span><em></em>
         </button>
         <div id="grpBox" hidden style="border:1px solid var(--rule);border-radius:3px;padding:14px;margin-bottom:12px;background:#FBFAF6">
@@ -1445,8 +1472,8 @@ function renderSeat(){
   });
   const c=classes.find(x=>x.id===curCls);
   if(!c){$('#seatMain').innerHTML=`<div class="empty">아직 반이 없습니다.<br>＋ 반 추가를 눌러 시작하세요.</div>`;return}
-  const gap=c.cols>6?3:5;
-  $('#seatMain').innerHTML=`<div class="seats" id="seatGrid" style="grid-template-columns:${colTpl(c.seats,c.cols)};grid-template-rows:${rowTpl(c.seats,c.cols)};gap:${gap}px"></div>
+  const gap=10;
+  $('#seatMain').innerHTML=`<div class="seatwrap"><div class="seats" id="seatGrid"></div></div>
     <div class="board">교탁</div>
     <div class="row mt" style="justify-content:space-between">
       <span style="font-size:15px;color:var(--ink-faint)">${c.seats.filter(Boolean).length}자리 · 발표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
@@ -1454,17 +1481,46 @@ function renderSeat(){
     </div>
     <button class="ghost" id="shareSpk" style="width:100%;min-height:48px;margin-top:10px">발표 현황 공유</button>`;
   const g=$('#seatGrid');
+  /* 고정 크기: 교탁보기 60x40, 마주보기 40x60. 칸 60px, 이름 19px */
+  const C=c.cols,R=Math.ceil(c.seats.length/C),NM=22;
+  g.style.display='grid';
+  g.style.gap=gap+'px';
+  g.style.width='max-content';
+  g.style.margin='0 auto';
+  const colW=[];
+  for(let cc=0;cc<C;cc++)colW.push(emptyCol(c.seats,C,cc)?'52px':'120px');
+  g.style.gridTemplateColumns=colW.join(' ');
+  const rowH=[];
+  for(let rr=0;rr<R;rr++)rowH.push(emptyRow(c.seats,C,rr)?'18px':(120+NM)+'px');
+  g.style.gridTemplateRows=rowH.join(' ');
+
+  /* 마주보기를 행 안에서 →← 짝으로 해석 */
+  const RD=(c.dirs||[]).map(d=>d?1:0);
+  const rdirs=Array(c.seats.length).fill(0);
+  for(let rr=0;rr<R;rr++){
+    let run=0;
+    for(let cc=0;cc<C;cc++){
+      const i=rr*C+cc;
+      if(c.seats[i]&&RD[i]){run++;rdirs[i]=(run%2===1)?3:1;}
+      else run=0;
+    }
+  }
   g.innerHTML=c.seats.map((on,i)=>{
+    const cc=i%C,rr=Math.floor(i/C);
     if(!on){
-      const cc=i%c.cols,rr=Math.floor(i/c.cols);
-      return`<div class="st off ${emptyCol(c.seats,c.cols,cc)?'vgap':''} ${emptyRow(c.seats,c.cols,rr)?'hgap':''}"></div>`;
+      return`<div class="st off ${emptyCol(c.seats,C,cc)?'vgap':''} ${emptyRow(c.seats,C,rr)?'hgap':''}"></div>`;
     }
     const idx=c.seats.slice(0,i).filter(Boolean).length;
     const st=c.students[idx]||{n:''};
     const n=(st.notes||[]).length;
-    const dr=(c.dirs&&c.dirs[i])||0;
+    const dr=rdirs[i];
     const sp=countSpeak(st),goal=c.goal||3;
-    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''}" data-i="${idx}">
+    const wide=(dr!==1&&dr!==3);
+    const isW=j=>c.seats[j]&&(rdirs[j]!==1&&rdirs[j]!==3);
+    const pairL=wide&&cc<C-1&&isW(rr*C+cc+1);
+    const pairR=wide&&cc>0&&isW(rr*C+cc-1);
+    const below=wide&&rr<R-1&&c.seats[(rr+1)*C+cc];
+    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''}" data-i="${idx}">
       <span class="stimg">
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
@@ -1498,6 +1554,17 @@ function colTpl(seats,cols){
     let any=false;
     for(let r=0;r<rows;r++)if(seats[r*cols+c]){any=true;break}
     out.push(any?'1fr':'0.8fr');
+  }
+  return out.join(' ');
+}
+function colTpl2(seats,cols){
+  const rows=Math.ceil(seats.length/cols);
+  const out=[];
+  for(let c=0;c<cols;c++){
+    let any=false;
+    for(let r=0;r<rows;r++)if(seats[r*cols+c]){any=true;break}
+    const half=any?'1fr':'0.8fr';
+    out.push(half,half);
   }
   return out.join(' ');
 }
@@ -1755,15 +1822,16 @@ function renderShape(){
   if(shape.length!==cols*(+$('#clsRows').value||5))resizeShape();
   $('#shapeHelp').textContent=shapeMode==='on'
     ? '칸을 눌러 자리를 끄고 켭니다. 빈 곳은 통로가 됩니다.'
-    : '칸을 누를 때마다 앉는 방향이 돌아갑니다. ↓는 교탁을 보는 자리입니다.';
-  $('#shapeGrid').innerHTML=`<div class="seats" style="grid-template-columns:${colTpl(shape,cols)};gap:${cols>6?4:6}px">
-    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'}" data-i="${i}">${on?(shapeMode==='dir'?ARROW[dirs[i]||0]:''):'·'}</button>`).join('')}</div>
+    : '칸을 눌러 교탁보기와 마주보기를 바꿉니다. 마주보기는 옆자리와 짝이 됩니다.';
+  $('#shapeGrid').innerHTML=`<div class="seats" style="grid-template-columns:repeat(${cols},1fr);gap:${cols>6?4:6}px">
+    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'}" data-i="${i}">${on?(shapeMode==='dir'?(dirs[i]?'<b class="fc">마주<br>보기</b>':'<b class="tc">교탁<br>보기</b>'):''):'·'}</button>`).join('')}</div>
     <div class="board">교탁</div>`;
   $$('#shapeGrid .sp').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.i;
     if(shapeMode==='dir'){
       if(!shape[i])return;
-      dirs[i]=((dirs[i]||0)+1)%4;b.textContent=ARROW[dirs[i]];return;
+      dirs[i]=dirs[i]?0:1;
+      renderShape();return;
     }
     shape[i]=!shape[i];
     b.classList.toggle('off',!shape[i]);b.textContent=shape[i]?(shapeMode==='dir'?ARROW[dirs[i]||0]:''):'·';
