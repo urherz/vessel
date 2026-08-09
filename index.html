@@ -158,7 +158,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   display:block;
 }
 .st.hasph .stimg{background:var(--paper-2)}
-.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%}
 .st .nmx{
   flex:none;width:100%;position:relative;border:0;background:none;
   padding:3px 0 0;color:var(--ink);
@@ -193,8 +193,8 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st .ar.c{left:50%;transform:translateX(-50%)}
 .seatwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
 .st.wide,.st.talld{width:100%;height:100%;justify-content:flex-end}
-.st.wide .stimg{width:120px;height:80px;flex:none;margin:0 auto}
-.st.talld .stimg{width:80px;height:120px;flex:none;margin:0 auto}
+.st.wide .stimg{width:90px;height:60px;flex:none;margin:0 auto}
+.st.talld .stimg{width:60px;height:90px;flex:none;margin:0 auto}
 .st.talld.fr .stimg{margin:0 0 0 auto}
 .st.talld.fl .stimg{margin:0 auto 0 0}
 .st.nu{flex-direction:column-reverse;justify-content:flex-start}
@@ -1472,14 +1472,16 @@ function renderSeat(){
   });
   const c=classes.find(x=>x.id===curCls);
   if(!c){$('#seatMain').innerHTML=`<div class="empty">아직 반이 없습니다.<br>＋ 반 추가를 눌러 시작하세요.</div>`;return}
-  const gap=10;
+  const gap=8;
   $('#seatMain').innerHTML=`<div class="seatwrap"><div class="seats" id="seatGrid"></div></div>
     <div class="board">교탁</div>
     <div class="row mt" style="justify-content:space-between">
       <span style="font-size:15px;color:var(--ink-faint)">${c.seats.filter(Boolean).length}자리 · 발표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
       <button class="ghost" id="clsEdit">반 수정</button>
     </div>
-    <button class="ghost" id="shareSpk" style="width:100%;min-height:48px;margin-top:10px">발표 현황 공유</button>`;
+    <button class="ghost" id="shareSpk" style="width:100%;min-height:48px;margin-top:10px">발표 현황 공유</button>
+    <label class="phbtn" for="bulkPh" style="margin-top:8px">사진 일괄 넣기 (파일명 = 학생 이름)
+      <input type="file" accept="image/*" multiple id="bulkPh"></label>`;
   const g=$('#seatGrid');
   /* 고정 크기: 교탁보기 60x40, 마주보기 40x60. 칸 60px, 이름 19px */
   const C=c.cols,R=Math.ceil(c.seats.length/C),NM=22;
@@ -1488,10 +1490,10 @@ function renderSeat(){
   g.style.width='max-content';
   g.style.margin='0 auto';
   const colW=[];
-  for(let cc=0;cc<C;cc++)colW.push(emptyCol(c.seats,C,cc)?'52px':'120px');
+  for(let cc=0;cc<C;cc++)colW.push(emptyCol(c.seats,C,cc)?'40px':'90px');
   g.style.gridTemplateColumns=colW.join(' ');
   const rowH=[];
-  for(let rr=0;rr<R;rr++)rowH.push(emptyRow(c.seats,C,rr)?'18px':(120+NM)+'px');
+  for(let rr=0;rr<R;rr++)rowH.push(emptyRow(c.seats,C,rr)?'14px':(90+NM)+'px');
   g.style.gridTemplateRows=rowH.join(' ');
 
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
@@ -1532,6 +1534,7 @@ function renderSeat(){
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>openSeat(+b.dataset.i));
   $('#clsEdit').onclick=()=>openCls(c);
   $('#shareSpk').onclick=shareSpeak;
+  $('#bulkPh').onchange=e=>{const fs=[...e.target.files];if(fs.length)bulkPhotos(fs);e.target.value=''};
 }
 function emptyCol(seats,cols,c){
   const rows=Math.ceil(seats.length/cols);
@@ -1567,6 +1570,49 @@ function colTpl2(seats,cols){
     out.push(half,half);
   }
   return out.join(' ');
+}
+function shrinkCover(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onerror=()=>rej();
+    r.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>rej();
+      img.onload=()=>{
+        const W=240,H=320,cv=document.createElement('canvas');
+        cv.width=W;cv.height=H;
+        const x=cv.getContext('2d');
+        const sc=Math.max(W/img.width,H/img.height);
+        const w=img.width*sc,h=img.height*sc;
+        x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+        res(cv.toDataURL('image/jpeg',0.78));
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+async function bulkPhotos(files){
+  const c=classes.find(x=>x.id===curCls);
+  if(!c){toast('반을 먼저 만들어주세요');return}
+  toast(`사진 ${files.length}장 처리 중`);
+  let okCnt=0;const miss=[];
+  for(const f of files){
+    const base=f.name.replace(/\.[^.]+$/,'').trim();
+    let idx=c.students.findIndex(st=>st.n===base);
+    if(idx<0)idx=c.students.findIndex(st=>st.n&&(base.includes(st.n)||st.n.includes(base)));
+    if(idx<0){miss.push(base);continue}
+    try{
+      const data=await shrinkCover(f);
+      const id='p'+curCls+'_'+idx;
+      await phSet(id,data);
+      c.students[idx].ph=id;
+      okCnt++;
+    }catch(e){miss.push(base)}
+  }
+  try{await set(K.cls,classes)}catch(e){}
+  renderSeat();
+  toast(miss.length?`${okCnt}명 연결 · 못 찾음: ${miss.slice(0,4).join(', ')}${miss.length>4?' 외':''}`:`${okCnt}명 모두 연결했습니다`);
 }
 async function shareSpeak(){
   const c=classes.find(x=>x.id===curCls);
