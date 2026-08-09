@@ -199,6 +199,12 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fl .stimg{margin:0 auto 0 0}
 .st.nu{flex-direction:column-reverse;justify-content:flex-start}
 .st.nu .nmx{padding:0 0 3px}
+.gname{
+  z-index:4;justify-self:start;align-self:start;pointer-events:none;
+  font-family:var(--serif);font-size:10.5px;font-weight:500;letter-spacing:.02em;
+  color:#F4F5F1;background:var(--celadon-deep);border-radius:2px;
+  padding:2px 6px;margin:-2px 0 0 -4px;line-height:1.4;white-space:nowrap;
+}
 .st.pl .nmx{justify-content:flex-start}
 .st.pl .nmt{text-align:left;padding-left:0}
 .st.pr2 .nmx{justify-content:flex-end}
@@ -726,6 +732,10 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
         <label class="f">이름</label>
         <p style="font-size:16px;color:var(--ink-faint);margin:-2px 0 10px;line-height:1.65">한 줄에 한 명씩. 자리 순서대로 채워집니다.</p>
         <textarea id="clsNames" rows="8" placeholder="김○○&#10;이○○&#10;박○○"></textarea>
+      </div>
+      <div class="mt">
+        <label class="f" for="clsGnames">모둠 이름</label>
+        <input id="clsGnames" placeholder="쉼표로 구분 · 왼쪽 위부터 순서대로 (예: 소크라테스, 칸트, 밀)">
       </div>
       <div class="mt">
         <div class="stp"><span class="k">발표 목표 횟수</span>
@@ -1490,10 +1500,18 @@ function renderSeat(){
   g.style.width='max-content';
   g.style.margin='0 auto';
   const colW=[];
-  for(let cc=0;cc<C;cc++)colW.push(emptyCol(c.seats,C,cc)?'40px':'90px');
+  for(let cc=0;cc<C;cc++){
+    const e=emptyCol(c.seats,C,cc);
+    const pe=cc>0&&emptyCol(c.seats,C,cc-1);
+    colW.push(e?(pe?'0px':'20px'):'90px');
+  }
   g.style.gridTemplateColumns=colW.join(' ');
   const rowH=[];
-  for(let rr=0;rr<R;rr++)rowH.push(emptyRow(c.seats,C,rr)?'14px':(90+NM)+'px');
+  for(let rr=0;rr<R;rr++){
+    const e=emptyRow(c.seats,C,rr);
+    const pe=rr>0&&emptyRow(c.seats,C,rr-1);
+    rowH.push(e?(pe?'0px':'7px'):(90+NM)+'px');
+  }
   g.style.gridTemplateRows=rowH.join(' ');
 
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
@@ -1507,10 +1525,38 @@ function renderSeat(){
       else run=0;
     }
   }
-  g.innerHTML=c.seats.map((on,i)=>{
+  /* 모둠 감지: 붙어 있는 자리들을 한 모둠으로 */
+  let glabels='';
+  if(c.gnames&&c.gnames.length){
+    const seen=Array(c.seats.length).fill(false);
+    const comps=[];
+    for(let i=0;i<c.seats.length;i++){
+      if(!c.seats[i]||seen[i])continue;
+      const q=[i];seen[i]=true;
+      let minR=99,minC=99;
+      while(q.length){
+        const j=q.pop();
+        const jr=Math.floor(j/C),jc=j%C;
+        if(jr<minR)minR=jr;
+        if(jr===minR&&jc<minC)minC=jc;
+        [[jr-1,jc],[jr+1,jc],[jr,jc-1],[jr,jc+1]].forEach(([r2,c2])=>{
+          if(r2<0||c2<0||r2>=R||c2>=C)return;
+          const k=r2*C+c2;
+          if(c.seats[k]&&!seen[k]){seen[k]=true;q.push(k)}
+        });
+      }
+      comps.push({minR,minC});
+    }
+    comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
+    glabels=comps.map((cp,gi)=>c.gnames[gi]
+      ?`<span class="gname" style="grid-column:${cp.minC+1};grid-row:${cp.minR+1}">${esc(c.gnames[gi])}</span>`:'').join('');
+  }
+  g.innerHTML=glabels+c.seats.map((on,i)=>{
     const cc=i%C,rr=Math.floor(i/C);
     if(!on){
-      return`<div class="st off ${emptyCol(c.seats,C,cc)?'vgap':''} ${emptyRow(c.seats,C,rr)?'hgap':''}"></div>`;
+      const ec=emptyCol(c.seats,C,cc),er=emptyRow(c.seats,C,rr);
+      const pc=cc>0&&emptyCol(c.seats,C,cc-1),pr=rr>0&&emptyRow(c.seats,C,rr-1);
+      return`<div class="st off ${ec&&!pc?'vgap':''} ${er&&!pr?'hgap':''}"></div>`;
     }
     const idx=c.seats.slice(0,i).filter(Boolean).length;
     const st=c.students[idx]||{n:''};
@@ -1528,7 +1574,7 @@ function renderSeat(){
         ${sp?`<span class="spk">${sp}</span>`:''}
         ${n?`<span class="dot"></span>`:''}
       </span>
-      <span class="nmx"><span class="nmt">${esc(st.n)||'&nbsp;'}</span>${dr?`<i class="ar ${dr===3?'r':dr===1?'l':'c'}">${ARROW[dr]}</i>`:''}</span></button>`;
+      <span class="nmx"><span class="nmt">${esc(st.n)||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>openSeat(+b.dataset.i));
@@ -1579,13 +1625,13 @@ function shrinkCover(file){
       const img=new Image();
       img.onerror=()=>rej();
       img.onload=()=>{
-        const W=240,H=320,cv=document.createElement('canvas');
+        const W=360,H=480,cv=document.createElement('canvas');
         cv.width=W;cv.height=H;
         const x=cv.getContext('2d');
         const sc=Math.max(W/img.width,H/img.height);
         const w=img.width*sc,h=img.height*sc;
         x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
-        res(cv.toDataURL('image/jpeg',0.78));
+        res(cv.toDataURL('image/jpeg',0.82));
       };
       img.src=r.result;
     };
@@ -1804,6 +1850,7 @@ function openCls(c){
   $('#clsCols').value=c?c.cols:6;
   $('#clsRows').value=c?c.rows:5;
   $('#clsGoal').value=(c&&c.goal)||3;
+  $('#clsGnames').value=(c&&c.gnames?c.gnames.join(', '):'');
   shape=c?[...c.seats]:Array(30).fill(true);
   dirs=c&&c.dirs?[...c.dirs]:Array(shape.length).fill(0);
   $('#clsNames').value=c?c.students.map(s=>s.n).join('\n'):'';
@@ -1911,7 +1958,8 @@ async function saveCls(){
     const old=prev&&prev.students.find(s=>s.n===n);
     return old?{...old,n}:{n,ph:'',notes:[]};
   });
-  const data={name,cols,rows,goal:+$('#clsGoal').value||3,seats:[...shape],dirs:[...dirs],students};
+  const gnames=$('#clsGnames').value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
+  const data={name,cols,rows,goal:+$('#clsGoal').value||3,gnames,seats:[...shape],dirs:[...dirs],students};
   if(editCls){classes=classes.map(x=>x.id===editCls?{...x,...data}:x)}
   else{const id='k'+Date.now();classes=[...classes,{id,...data}];curCls=id}
   await set(K.cls,classes);
@@ -2047,13 +2095,13 @@ function loadPhoto(file){
     const img=new Image();
     img.onerror=()=>toast('이 형식은 지원되지 않습니다');
     img.onload=()=>{
-      const W=240,H=320,cv=document.createElement('canvas');
+      const W=360,H=480,cv=document.createElement('canvas');
       cv.width=W;cv.height=H;
       const x=cv.getContext('2d');
       const s=Math.max(W/img.width,H/img.height);
       const w=img.width*s,h=img.height*s;
       x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
-      setPhoto(cv.toDataURL('image/jpeg',0.78));
+      setPhoto(cv.toDataURL('image/jpeg',0.82));
     };
     img.src=r.result;
   };
