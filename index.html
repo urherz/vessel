@@ -1613,11 +1613,12 @@ function renderSeat(){
     for(let i=0;i<seatsV.length;i++){
       if(!seatsV[i]||seen[i])continue;
       const q=[i];seen[i]=true;
-      let minR=99,minC=99,maxC=-1;
+      let minR=99,minC=99,maxC=-1,maxR=-1;
       while(q.length){
         const j=q.pop();
         const jr=Math.floor(j/C),jc=j%C;
         if(jr<minR)minR=jr;
+        if(jr>maxR)maxR=jr;
         if(jc<minC)minC=jc;
         if(jc>maxC)maxC=jc;
         [[jr-1,jc],[jr+1,jc],[jr,jc-1],[jr,jc+1]].forEach(([r2,c2])=>{
@@ -1626,7 +1627,7 @@ function renderSeat(){
           if(seatsV[k]&&!seen[k]){seen[k]=true;q.push(k)}
         });
       }
-      comps.push({minR,minC,maxC});
+      comps.push({minR,minC,maxC,maxR});
     }
     comps.sort((a,b)=>viewFlip?(b.minR-a.minR||b.minC-a.minC):(a.minR-b.minR||a.minC-b.minC));
     const px=arr=>arr.map(v=>parseFloat(v));
@@ -1635,7 +1636,13 @@ function renderSeat(){
       let left=0;for(let k=0;k<cp.minC;k++)left+=parseFloat(colW[k])+gap;
       let w=0;for(let k=cp.minC;k<=cp.maxC;k++)w+=parseFloat(colW[k]);
       w+=gap*(cp.maxC-cp.minC);
-      let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
+      let top=0;
+      if(viewFlip){
+        for(let k=0;k<=cp.maxR;k++)top+=parseFloat(rowH[k])+gap;
+        top-=gap;top+=3;
+        return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top}px;transform:translateX(-50%)">${esc(gname)}</span>`;
+      }
+      for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
       return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top-9}px;transform:translateX(-50%)">${esc(gname)}</span>`;
     }).join('');
   }
@@ -1658,7 +1665,7 @@ function renderSeat(){
     const runLen=wide?(runEnd-runStart+1):0;
     const pairL=wide&&runLen===2&&cc===runStart;
     const pairR=wide&&runLen===2&&cc===runEnd;
-    const below=wide&&(viewFlip?(rr>0&&seatsV[(rr-1)*C+cc]):(rr<R-1&&seatsV[(rr+1)*C+cc]));
+    const below=wide&&(viewFlip?!(rr>0&&seatsV[(rr-1)*C+cc]):(rr<R-1&&seatsV[(rr+1)*C+cc]));
     const joinR=wide&&(dirsV[i]===2)&&cc<C-1&&seatsV[rr*C+cc+1];
     const joinL=cc>0&&seatsV[rr*C+cc-1]&&(dirsV[rr*C+cc-1]===2);
     if(joinL)return`<div class="st off"></div>`;
