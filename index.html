@@ -133,7 +133,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   text-align:center;font-family:var(--serif);font-size:12px;letter-spacing:.3em;
   color:var(--ink-faint);border-top:1px solid var(--rule);padding-top:9px;margin-top:12px;
 }
-.seats{display:grid;gap:6px;align-items:start}
+.seats{display:grid;gap:6px;align-items:start;position:relative}
 .st{
   border:0;background:none;
   cursor:pointer;position:relative;overflow:visible;padding:0;display:flex;
@@ -153,12 +153,12 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   background:repeating-linear-gradient(to right,var(--rule) 0 3px,transparent 3px 7px);
 }
 .stimg{
-  position:relative;overflow:hidden;
+  position:relative;overflow:visible;
   background:#FBFAF6;border:1px solid var(--rule);border-radius:3px;
   display:block;
 }
 .st.hasph .stimg{background:var(--paper-2)}
-.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:2px}
 .st .nmx{
   flex:none;width:100%;position:relative;border:0;background:none;
   padding:3px 0 0;color:var(--ink);
@@ -197,14 +197,26 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld .stimg{width:60px;height:90px;flex:none;margin:0 auto}
 .st.talld.fr .stimg{margin:0 0 0 auto}
 .st.talld.fl .stimg{margin:0 auto 0 0}
+.st.talld.fr .nmx{justify-content:flex-end}
+.st.talld.fr .nmt{width:60px;text-align:center}
+.st.talld.fl .nmx{justify-content:flex-start}
+.st.talld.fl .nmt{width:60px;text-align:center}
 .st.nu{flex-direction:column-reverse;justify-content:flex-start}
-.st.nu .nmx{padding:0 0 3px}
+.st.nu .nmx{padding:0 0 21px}
 .gname{
-  z-index:4;justify-self:start;align-self:start;pointer-events:none;
+  position:absolute;z-index:4;pointer-events:none;
   font-family:var(--serif);font-size:10.5px;font-weight:500;letter-spacing:.02em;
   color:#F4F5F1;background:var(--celadon-deep);border-radius:2px;
   padding:2px 6px;margin:-2px 0 0 -4px;line-height:1.4;white-space:nowrap;
 }
+.chair{
+  position:absolute;z-index:3;width:14px;height:14px;
+  background:var(--ink);border-radius:2px;opacity:.78;
+}
+.st.wide .chair{top:-19px;left:50%;transform:translateX(-50%)}
+.st.talld.fr .chair{left:-19px;top:50%;transform:translateY(-50%)}
+.st.talld.fl .chair{right:-19px;top:50%;transform:translateY(-50%)}
+.st .chair.ldr{background:var(--seal);opacity:1}
 .st.pl .nmx{justify-content:flex-start}
 .st.pl .nmt{text-align:left;padding-left:0}
 .st.pr2 .nmx{justify-content:flex-end}
@@ -678,6 +690,21 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
           <input type="checkbox" id="autoBk" checked>
         </label>
         <p style="font-size:16px;color:var(--ink-faint);margin:8px 0 0;line-height:1.65">다운로드 폴더에 파일이 쌓입니다. 가끔 오래된 것만 지우세요.</p>
+        <div style="border-top:1px solid var(--rule);margin-top:16px;padding-top:14px">
+          <p class="eyebrow">기기 동기화</p>
+          <p style="font-size:14.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.7" id="syncStat">GitHub 계정으로 여러 기기에서 같은 내용을 봅니다.</p>
+          <div id="syncSetup">
+            <input type="password" id="ghTok" placeholder="GitHub 토큰 붙여넣기">
+            <div class="mt"><button class="act" id="ghConnect">연결</button></div>
+          </div>
+          <div id="syncOn" hidden>
+            <div class="row" style="gap:8px">
+              <button class="ghost" id="syncPullBtn" style="flex:1;min-height:46px">받아오기</button>
+              <button class="ghost" id="syncPushBtn" style="flex:1;min-height:46px">올리기</button>
+            </div>
+            <button class="lnk" id="ghDisc" style="width:100%;margin-top:6px">연결 끊기</button>
+          </div>
+        </div>
         <label class="phbtn" for="impIn" style="margin-top:14px">백업 파일 불러오기
           <input type="file" accept="application/json,.json" id="impIn"></label>
       </div>
@@ -735,7 +762,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       </div>
       <div class="mt">
         <label class="f" for="clsGnames">모둠 이름</label>
-        <input id="clsGnames" placeholder="쉼표로 구분 · 왼쪽 위부터 순서대로 (예: 소크라테스, 칸트, 밀)">
+        <input id="clsGnames" placeholder="쉼표로 구분 · 왼쪽 위 모둠부터 순서대로">
       </div>
       <div class="mt">
         <div class="stp"><span class="k">발표 목표 횟수</span>
@@ -986,7 +1013,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1057,6 +1084,7 @@ async function get(k,f){try{const v=await rawGet(k);return v?JSON.parse(v):f}cat
 async function set(k,v){
   try{await rawSet(k,JSON.stringify(v))}
   catch(e){warnStore(e);throw e}
+  if(typeof schedulePush==='function'&&k!==K.gh&&k!==K.gist&&k!==K.syncAt&&k!==K.bk&&k!==K.cnt)schedulePush();
 }
 function warnStore(e){
   if(STORE==='none'){showBanner();return}
@@ -1094,7 +1122,9 @@ async function boot(){
   logs=logs.map(l=>l.band?l:{...l,band:Math.min(4,Math.max(1,Math.round((l.score||3)/5*4)))});
   week=await get(K.week,null); if(!week){week={notes:['','','','','','',''],duty:[false,false,false,false,false,false,false]};try{await set(K.week,week)}catch(e){}}
   term=await get(K.term,null); if(!term){term={start:'2026-03-02',end:'2027-02-04',perWeek:3};try{await set(K.term,term)}catch(e){}}
-  buildToday();buildCards();await buildLog();await buildSeat();buildRhythm();buildTerm();renderBkInfo();
+  ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
+  if(ghTok&&gistId)await syncPull(true);
+  buildToday();buildCards();await buildLog();await buildSeat();await buildSync();buildRhythm();buildTerm();renderBkInfo();
 }
 
 $$('nav button').forEach(b=>b.onclick=()=>{
@@ -1548,8 +1578,13 @@ function renderSeat(){
       comps.push({minR,minC});
     }
     comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
-    glabels=comps.map((cp,gi)=>c.gnames[gi]
-      ?`<span class="gname" style="grid-column:${cp.minC+1};grid-row:${cp.minR+1}">${esc(c.gnames[gi])}</span>`:'').join('');
+    const px=arr=>arr.map(v=>parseFloat(v));
+    glabels=comps.map((cp,gi)=>{
+      if(!c.gnames[gi])return'';
+      let left=0;for(let k=0;k<cp.minC;k++)left+=parseFloat(colW[k])+gap;
+      let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
+      return`<span class="gname" style="left:${left}px;top:${top-4}px">${esc(c.gnames[gi])}</span>`;
+    }).join('');
   }
   g.innerHTML=glabels+c.seats.map((on,i)=>{
     const cc=i%C,rr=Math.floor(i/C);
@@ -1576,6 +1611,7 @@ function renderSeat(){
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
         ${n?`<span class="dot"></span>`:''}
+        <i class="chair ${st.leader?'ldr':''}"></i>
       </span>
       <span class="nmx"><span class="nmt">${esc(st.n)||'&nbsp;'}</span></span></button>`;
   }).join('');
@@ -1696,6 +1732,111 @@ function countSpeak(st){
 }
 function countNotes(c){return c.students.reduce((a,s)=>a+((s.notes||[]).length),0)}
 
+/* ── 기기 동기화 (GitHub 비공개 Gist) ── */
+let ghTok='',gistId='',syncTimer=null,syncBusy=false;
+async function collectAll(){
+  const imgs={};
+  for(const c of classes)for(const st of c.students){
+    if(st.ph){const d=await phGet(st.ph);if(d)imgs[st.ph]=d}
+    for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
+  }
+  return {v:1,at:Date.now(),classes,imgs,
+    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),
+    week:await get(K.week,null),term:await get(K.term,null)};
+}
+async function applyAll(d){
+  for(const k in (d.imgs||{})){try{await phSet(k,d.imgs[k])}catch(e){}}
+  if(d.classes){classes=d.classes;try{await set(K.cls,classes)}catch(e){}}
+  if(d.cards){cards=d.cards.map(norm);try{await set(K.cards,cards)}catch(e){}}
+  if(d.logs){logs=d.logs;try{await set(K.logs,logs)}catch(e){}}
+  if(d.wlog){logs2=d.wlog;try{await set(K.log,logs2)}catch(e){}}
+  if(d.week){week=d.week;try{await set(K.week,week)}catch(e){}}
+  if(d.term){term=d.term;try{await set(K.term,term)}catch(e){}}
+  try{await set(K.syncAt,d.at)}catch(e){}
+  curCls=classes.length?classes[0].id:null;
+  renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();
+}
+function ghFetch(url,opt={}){
+  opt.headers=Object.assign({'Authorization':'token '+ghTok,'Accept':'application/vnd.github+json'},opt.headers||{});
+  return fetch(url,opt);
+}
+async function findOrCreateGist(){
+  let r=await ghFetch('https://api.github.com/gists?per_page=100');
+  if(r.status===401)throw new Error('토큰이 올바르지 않습니다');
+  const list=await r.json();
+  const hit=(list||[]).find(g=>g.files&&g.files['vessel-sync.json']);
+  if(hit)return hit.id;
+  r=await ghFetch('https://api.github.com/gists',{method:'POST',
+    body:JSON.stringify({description:'Vessel 동기화 데이터',public:false,
+      files:{'vessel-sync.json':{content:'{}'}}})});
+  if(!r.ok)throw new Error('저장소를 만들지 못했습니다');
+  return (await r.json()).id;
+}
+async function syncPush(){
+  if(!ghTok||!gistId||syncBusy)return;
+  syncBusy=true;setSyncStat('올리는 중…');
+  try{
+    const data=await collectAll();
+    const r=await ghFetch('https://api.github.com/gists/'+gistId,{method:'PATCH',
+      body:JSON.stringify({files:{'vessel-sync.json':{content:JSON.stringify(data)}}})});
+    if(!r.ok)throw new Error();
+    await set(K.syncAt,data.at);
+    setSyncStat('방금 올렸습니다');
+  }catch(e){setSyncStat('올리기 실패. 인터넷을 확인해주세요')}
+  syncBusy=false;
+}
+async function syncPull(silent){
+  if(!ghTok||!gistId)return;
+  if(!silent)setSyncStat('받아오는 중…');
+  try{
+    const r=await ghFetch('https://api.github.com/gists/'+gistId);
+    if(!r.ok)throw new Error();
+    const g=await r.json();
+    let raw=g.files['vessel-sync.json'];
+    let txt=raw.content;
+    if(raw.truncated){txt=await (await fetch(raw.raw_url)).text()}
+    const d=JSON.parse(txt||'{}');
+    if(!d||!d.at){if(!silent)setSyncStat('아직 올린 내용이 없습니다');return}
+    const localAt=await get(K.syncAt,0);
+    if(d.at<=localAt){if(!silent)setSyncStat('이미 최신입니다');return}
+    await applyAll(d);
+    setSyncStat('받아왔습니다');
+  }catch(e){if(!silent)setSyncStat('받아오기 실패')}
+}
+function schedulePush(){
+  if(!ghTok||!gistId)return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(syncPush,4000);
+}
+function setSyncStat(t){const el=$('#syncStat');if(el)el.textContent=t}
+async function buildSync(){
+  ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
+  const on=!!(ghTok&&gistId);
+  $('#syncSetup').hidden=on;$('#syncOn').hidden=!on;
+  if(on)setSyncStat('연결됨. 열 때마다 자동으로 받아옵니다.');
+  $('#ghConnect').onclick=async()=>{
+    const t=$('#ghTok').value.trim();
+    if(!t){toast('토큰을 붙여넣어주세요');return}
+    setSyncStat('연결 중…');
+    try{
+      ghTok=t;
+      gistId=await findOrCreateGist();
+      await set(K.gh,ghTok);await set(K.gist,gistId);
+      $('#syncSetup').hidden=true;$('#syncOn').hidden=false;
+      await syncPull();
+      toast('연결했습니다');
+    }catch(e){ghTok='';setSyncStat(e.message||'연결 실패')}
+  };
+  $('#syncPullBtn').onclick=()=>syncPull(false);
+  $('#syncPushBtn').onclick=syncPush;
+  $('#ghDisc').onclick=async()=>{
+    if(!confirm('이 기기에서 동기화 연결을 끊을까요? 저장된 내용은 남습니다.'))return;
+    ghTok='';gistId='';
+    try{await rawDel(K.gh);await rawDel(K.gist)}catch(e){}
+    $('#syncSetup').hidden=false;$('#syncOn').hidden=true;
+    setSyncStat('GitHub 계정으로 여러 기기에서 같은 내용을 봅니다.');
+  };
+}
 /* 백업 */
 let autoBk=true,bkCnt=0;
 const AUTO_EVERY=5;
@@ -2006,7 +2147,8 @@ function renderDetail(){
       <div class="stuinfo">
         <b>${esc(st.n)||'이름 없음'}</b>
         <span>발표 ${countSpeak(st)}회 · 기록 ${notes.length}개</span>
-        ${st.ph?`<button class="lnk" id="phDel">사진 지우기</button>`:''}
+        <button class="lnk" id="ldrTgl" style="display:block">${st.leader?'모둠장 해제':'모둠장으로 지정'}</button>
+        ${st.ph?`<button class="lnk" id="phDel" style="display:block;margin-top:10px">사진 지우기</button>`:''}
       </div>
     </div>
     <div class="qm" id="quick" style="margin-top:22px">${QUICK.map(q=>`<button data-q="${q}" aria-pressed="false">${q}</button>`).join('')}</div>
@@ -2024,6 +2166,12 @@ function renderDetail(){
       <button class="rm" data-id="${n.id}">지우기</button></div>`).join('')
       :`<div class="empty">아직 기록이 없습니다.</div>`}`;
   paintPhotos($('#detailBody'));
+  $('#ldrTgl').onclick=async()=>{
+    const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
+    st2.leader=!st2.leader;
+    try{await set(K.cls,classes)}catch(e){}
+    renderDetail();toast(st2.leader?'모둠장으로 표시합니다':'해제했습니다');
+  };
   $$('#quick button').forEach(b=>b.onclick=()=>{
     const t=$('#noteIn'),w=b.dataset.q;
     const cur=t.value.trim();
