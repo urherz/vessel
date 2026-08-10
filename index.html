@@ -1557,21 +1557,6 @@ function renderSeat(){
   g.style.gap=gap+'px';
   g.style.width='max-content';
   g.style.margin='0 auto';
-  const colW=[];
-  for(let cc=0;cc<C;cc++){
-    const e=emptyCol(seatsV,C,cc);
-    const pe=cc>0&&emptyCol(seatsV,C,cc-1);
-    colW.push(e?(pe?'0px':'20px'):'90px');
-  }
-  g.style.gridTemplateColumns=colW.join(' ');
-  const rowH=[];
-  for(let rr=0;rr<R;rr++){
-    const e=emptyRow(seatsV,C,rr);
-    const pe=rr>0&&emptyRow(seatsV,C,rr-1);
-    rowH.push(e?(pe?'0px':'7px'):(90+NM)+'px');
-  }
-  g.style.gridTemplateRows=rowH.join(' ');
-
   const ordO=seatOrder(c.seats,C,c.dirs||[]);
   const posO={};ordO.forEach((li,k)=>posO[li]=k);
   let seatsV=c.seats,dirsV=(c.dirs||[]),posOf=posO;
@@ -1594,6 +1579,21 @@ function renderSeat(){
       }
     }
   }
+  const colW=[];
+  for(let cc=0;cc<C;cc++){
+    const e=emptyCol(seatsV,C,cc);
+    const pe=cc>0&&emptyCol(seatsV,C,cc-1);
+    colW.push(e?(pe?'0px':'20px'):'90px');
+  }
+  g.style.gridTemplateColumns=colW.join(' ');
+  const rowH=[];
+  for(let rr=0;rr<R;rr++){
+    const e=emptyRow(seatsV,C,rr);
+    const pe=rr>0&&emptyRow(seatsV,C,rr-1);
+    rowH.push(e?(pe?'0px':'7px'):(90+NM)+'px');
+  }
+  g.style.gridTemplateRows=rowH.join(' ');
+
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
   const RD=dirsV.map(d=>d===1?1:0);
   const rdirs=Array(c.seats.length).fill(0);
