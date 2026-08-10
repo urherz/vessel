@@ -60,6 +60,7 @@ header::before{
 }
 .synctop:active{background:var(--paper-2)}
 .synctop.busy{opacity:.5;pointer-events:none}
+.synctop.need{border-color:var(--seal);color:var(--seal)}
 .brand span{font-size:13px;color:var(--ink-faint);letter-spacing:.08em}
 .today{position:relative;margin-top:2px;font-size:14px;color:var(--ink-soft)}
 
@@ -766,7 +767,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       </div>
       <div class="mt">
         <label class="f">이름</label>
-        <p style="font-size:16px;color:var(--ink-faint);margin:-2px 0 10px;line-height:1.65">한 줄에 한 명씩. 자리 순서대로 채워집니다.</p>
+        <p style="font-size:16px;color:var(--ink-faint);margin:-2px 0 10px;line-height:1.65">한 줄에 한 명씩. 1모둠부터, 모둠 안에서는 시계방향으로 채워집니다.</p>
         <textarea id="clsNames" rows="8" placeholder="김○○&#10;이○○&#10;박○○"></textarea>
       </div>
       <div class="mt">
@@ -1553,6 +1554,8 @@ function renderSeat(){
   }
   g.style.gridTemplateRows=rowH.join(' ');
 
+  const ord=seatOrder(c.seats,C);
+  const posOf={};ord.forEach((li,k)=>posOf[li]=k);
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
   const RD=(c.dirs||[]).map(d=>d?1:0);
   const rdirs=Array(c.seats.length).fill(0);
@@ -1572,27 +1575,30 @@ function renderSeat(){
     for(let i=0;i<c.seats.length;i++){
       if(!c.seats[i]||seen[i])continue;
       const q=[i];seen[i]=true;
-      let minR=99,minC=99;
+      let minR=99,minC=99,maxC=-1;
       while(q.length){
         const j=q.pop();
         const jr=Math.floor(j/C),jc=j%C;
         if(jr<minR)minR=jr;
-        if(jr===minR&&jc<minC)minC=jc;
+        if(jc<minC)minC=jc;
+        if(jc>maxC)maxC=jc;
         [[jr-1,jc],[jr+1,jc],[jr,jc-1],[jr,jc+1]].forEach(([r2,c2])=>{
           if(r2<0||c2<0||r2>=R||c2>=C)return;
           const k=r2*C+c2;
           if(c.seats[k]&&!seen[k]){seen[k]=true;q.push(k)}
         });
       }
-      comps.push({minR,minC});
+      comps.push({minR,minC,maxC});
     }
     comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
     const px=arr=>arr.map(v=>parseFloat(v));
     glabels=comps.map((cp,gi)=>{
       const gname=(c.gnames&&c.gnames[gi])||((gi+1)+'모둠');
       let left=0;for(let k=0;k<cp.minC;k++)left+=parseFloat(colW[k])+gap;
+      let w=0;for(let k=cp.minC;k<=cp.maxC;k++)w+=parseFloat(colW[k]);
+      w+=gap*(cp.maxC-cp.minC);
       let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
-      return`<span class="gname" style="left:${left}px;top:${top-4}px">${esc(gname)}</span>`;
+      return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top-4}px;transform:translateX(-50%)">${esc(gname)}</span>`;
     }).join('');
   }
   g.innerHTML=glabels+c.seats.map((on,i)=>{
@@ -1602,7 +1608,7 @@ function renderSeat(){
       const pc=cc>0&&emptyCol(c.seats,C,cc-1),pr=rr>0&&emptyRow(c.seats,C,rr-1);
       return`<div class="st off ${ec&&!pc?'vgap':''} ${er&&!pr?'hgap':''}"></div>`;
     }
-    const idx=c.seats.slice(0,i).filter(Boolean).length;
+    const idx=posOf[i];
     const st=c.students[idx]||{n:''};
     const n=(st.notes||[]).length;
     const dr=rdirs[i];
@@ -1739,6 +1745,46 @@ async function shareSpeak(){
 function countSpeak(st){
   return (st.notes||[]).filter(n=>/발표/.test(n.t)).length;
 }
+function seatOrder(seats,cols){
+  const R=Math.ceil(seats.length/cols);
+  const seen=Array(seats.length).fill(false),comps=[];
+  for(let i=0;i<seats.length;i++){
+    if(!seats[i]||seen[i])continue;
+    const q=[i],cells=[];seen[i]=true;
+    while(q.length){
+      const j=q.pop();cells.push(j);
+      const jr=Math.floor(j/cols),jc=j%cols;
+      [[jr-1,jc],[jr+1,jc],[jr,jc-1],[jr,jc+1]].forEach(([r2,c2])=>{
+        if(r2<0||c2<0||r2>=R||c2>=cols)return;
+        const k=r2*cols+c2;
+        if(seats[k]&&!seen[k]){seen[k]=true;q.push(k)}
+      });
+    }
+    const rs=cells.map(x=>Math.floor(x/cols)),cs=cells.map(x=>x%cols);
+    comps.push({cells,minR:Math.min(...rs),minC:Math.min(...cs),
+      cr:rs.reduce((a,b)=>a+b,0)/rs.length,cc:cs.reduce((a,b)=>a+b,0)/cs.length});
+  }
+  comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
+  const order=[];
+  comps.forEach(cp=>{
+    const cells=[...cp.cells];
+    const rs=new Set(cells.map(x=>Math.floor(x/cols)));
+    const csn=new Set(cells.map(x=>x%cols));
+    if(rs.size===1)cells.sort((a,b)=>(a%cols)-(b%cols));
+    else if(csn.size===1)cells.sort((a,b)=>a-b);
+    else cells.sort((a,b)=>{
+      const ang=x=>{
+        const dr=Math.floor(x/cols)-cp.cr,dc=(x%cols)-cp.cc;
+        let t=Math.atan2(dc,-dr)+Math.PI/2+1e-4;
+        if(t<0)t+=Math.PI*2;if(t>=Math.PI*2)t-=Math.PI*2;
+        return t;
+      };
+      return ang(a)-ang(b);
+    });
+    order.push(...cells);
+  });
+  return order;
+}
 function countNotes(c){return c.students.reduce((a,s)=>a+((s.notes||[]).length),0)}
 
 /* ── 기기 동기화 (GitHub 비공개 Gist) ── */
@@ -1790,6 +1836,7 @@ async function syncPush(){
       body:JSON.stringify({files:{'vessel-sync.json':{content:JSON.stringify(data)}}})});
     if(!r.ok)throw new Error();
     await set(K.syncAt,data.at);
+    const b=$('#syncTop');if(b)b.classList.remove('need');
     setSyncStat('방금 올렸습니다');
   }catch(e){setSyncStat('올리기 실패. 인터넷을 확인해주세요')}
   syncBusy=false;
@@ -1814,6 +1861,7 @@ async function syncPull(silent){
 }
 function schedulePush(){
   if(!ghTok||!gistId)return;
+  const b=$('#syncTop');if(b)b.classList.add('need');
   clearTimeout(syncTimer);
   syncTimer=setTimeout(syncPush,4000);
 }
