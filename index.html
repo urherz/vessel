@@ -200,7 +200,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st .ar.r{right:1px}
 .st .ar.l{left:1px}
 .st .ar.c{left:50%;transform:translateX(-50%)}
-.seatwrap{overflow-x:auto;margin:0 -18px;padding:0 18px}
+.seatwrap{overflow-x:auto;margin:0 -18px;padding:26px 18px 4px}
 .st.wide,.st.talld{width:100%;height:100%;justify-content:flex-end}
 .st.wide .stimg{width:90px;height:60px;flex:none;margin:0 auto}
 .st.talld .stimg{width:60px;height:90px;flex:none;margin:0 auto}
@@ -226,6 +226,8 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fr .chair{left:-19px;top:50%;transform:translateY(-50%)}
 .st.talld.fl .chair{right:-19px;top:50%;transform:translateY(-50%)}
 .st .chair.ldr{background:var(--seal);opacity:1}
+.st.jl .stimg{margin:0 -4px 0 auto;border-top-right-radius:0;border-bottom-right-radius:0;border-right:0}
+.st.jr .stimg{margin:0 auto 0 -4px;border-top-left-radius:0;border-bottom-left-radius:0}
 .st.pl .nmx{justify-content:flex-start}
 .st.pl .nmt{text-align:left;padding-left:0}
 .st.pr2 .nmx{justify-content:flex-end}
@@ -241,6 +243,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .sp b{font-weight:500;font-size:11px;line-height:1.35;letter-spacing:-.02em;display:block}
 .sp .tc{color:var(--ink-faint)}
 .sp .fc{color:#F4F5F1}
+.sp .jc{color:var(--seal)}
 .sp:has(.fc){background:var(--celadon-deep);border-color:var(--celadon-deep)}
 .sp.off{background:var(--paper-2);border-style:dashed;color:var(--ink-faint);font-size:12px}
 
@@ -1557,7 +1560,7 @@ function renderSeat(){
   const ord=seatOrder(c.seats,C);
   const posOf={};ord.forEach((li,k)=>posOf[li]=k);
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
-  const RD=(c.dirs||[]).map(d=>d?1:0);
+  const RD=(c.dirs||[]).map(d=>d===1?1:0);
   const rdirs=Array(c.seats.length).fill(0);
   for(let rr=0;rr<R;rr++){
     let run=0;
@@ -1621,7 +1624,9 @@ function renderSeat(){
     const pairL=wide&&runLen===2&&cc===runStart;
     const pairR=wide&&runLen===2&&cc===runEnd;
     const below=wide&&rr<R-1&&c.seats[(rr+1)*C+cc];
-    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''}" data-i="${idx}">
+    const joinR=wide&&(c.dirs&&c.dirs[i]===2)&&cc<C-1&&isW(rr*C+cc+1);
+    const joinL=wide&&cc>0&&(c.dirs&&c.dirs[rr*C+cc-1]===2)&&isW(i);
+    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'jl':''} ${joinL?'jr':''}" data-i="${idx}">
       <span class="stimg">
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
@@ -2130,15 +2135,15 @@ function renderShape(){
   if(shape.length!==cols*(+$('#clsRows').value||5))resizeShape();
   $('#shapeHelp').textContent=shapeMode==='on'
     ? '칸을 눌러 자리를 끄고 켭니다. 빈 곳은 통로가 됩니다.'
-    : '칸을 눌러 교탁보기와 마주보기를 바꿉니다. 마주보기는 옆자리와 짝이 됩니다.';
+    : '누를 때마다 교탁보기 → 붙임 → 마주보기 순서로 바뀝니다. 붙임은 오른쪽 책상과 한 덩어리가 됩니다.';
   $('#shapeGrid').innerHTML=`<div class="seats" style="grid-template-columns:repeat(${cols},1fr);gap:${cols>6?4:6}px">
-    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'}" data-i="${i}">${on?(shapeMode==='dir'?(dirs[i]?'<b class="fc">마주<br>보기</b>':'<b class="tc">교탁<br>보기</b>'):''):'·'}</button>`).join('')}</div>
+    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'}" data-i="${i}">${on?(shapeMode==='dir'?(dirs[i]===1?'<b class="fc">마주<br>보기</b>':dirs[i]===2?'<b class="jc">붙임<br>→</b>':'<b class="tc">교탁<br>보기</b>'):''):'·'}</button>`).join('')}</div>
     <div class="board">교탁</div>`;
   $$('#shapeGrid .sp').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.i;
     if(shapeMode==='dir'){
       if(!shape[i])return;
-      dirs[i]=dirs[i]?0:1;
+      dirs[i]=dirs[i]===0?2:(dirs[i]===2?1:0);
       renderShape();return;
     }
     shape[i]=!shape[i];
