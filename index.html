@@ -226,12 +226,11 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fr .chair{left:-19px;top:50%;transform:translateY(-50%)}
 .st.talld.fl .chair{right:-19px;top:50%;transform:translateY(-50%)}
 .st .chair.ldr{background:var(--seal);opacity:1}
+.st.done .chair{box-shadow:0 0 0 4px #E9C46A;opacity:1}
 .st.selsw .stimg{border-color:var(--seal);box-shadow:0 0 0 2px var(--seal)}
 button.ghost.on{background:var(--celadon-deep);border-color:var(--celadon-deep);color:#F4F5F1}
-.st.jl .stimg{margin:0 -4px 0 auto;border-top-right-radius:0;border-bottom-right-radius:0;border-right:0}
-.st.jr .stimg{margin:0 auto 0 -4px;border-top-left-radius:0;border-bottom-left-radius:0;border-left:0}
-.st.jl .chair{left:100%;transform:translateX(-50%)}
-.st.jr .chair{display:none}
+.st.solo{width:188px;z-index:1}
+.st.solo .stimg{width:188px}
 .st.pl .nmx{justify-content:flex-start}
 .st.pl .nmt{text-align:left;padding-left:0}
 .st.pr2 .nmx{justify-content:flex-end}
@@ -788,13 +787,6 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
           <input type="number" inputmode="numeric" id="clsGoal" min="1" max="20">
           <button class="mn" data-t="goal" data-d="1">＋</button></div>
         <p style="font-size:15px;color:var(--ink-faint);margin:0;line-height:1.65">이 횟수를 채우면 좌석표에 초록으로 표시됩니다.</p>
-      </div>
-      <div class="mt" id="clsMoveWrap" hidden>
-        <label class="f">탭 순서</label>
-        <div class="row" style="gap:8px">
-          <button class="ghost" id="clsMoveL" style="flex:1;min-height:46px">◀ 앞으로</button>
-          <button class="ghost" id="clsMoveR" style="flex:1;min-height:46px">뒤로 ▶</button>
-        </div>
       </div>
       <div class="mt"><button class="act" id="setupSave">저장</button></div>
 
@@ -1541,8 +1533,10 @@ function renderSeat(){
   $('#seatMain').innerHTML=`<div class="seatwrap"><div class="seats" id="seatGrid"></div></div>
     <div class="board">교탁</div>
     <div class="row mt" style="justify-content:space-between">
-      <span style="font-size:15px;color:var(--ink-faint)">${c.seats.filter(Boolean).length}자리 · 발표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
+      <span style="font-size:15px;color:var(--ink-faint)">${seatOrder(c.seats,c.cols,c.dirs||[]).length}자리 · 발표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
       <span class="row" style="gap:8px">
+        <button class="ghost" id="clsMvL" title="탭 앞으로">◀</button>
+        <button class="ghost" id="clsMvR" title="탭 뒤로">▶</button>
         <button class="ghost" id="swapBtn">자리 바꾸기</button>
         <button class="ghost" id="clsEdit">반 수정</button>
       </span>
@@ -1572,7 +1566,7 @@ function renderSeat(){
   }
   g.style.gridTemplateRows=rowH.join(' ');
 
-  const ord=seatOrder(c.seats,C);
+  const ord=seatOrder(c.seats,C,c.dirs||[]);
   const posOf={};ord.forEach((li,k)=>posOf[li]=k);
   /* 마주보기를 행 안에서 →← 짝으로 해석 */
   const RD=(c.dirs||[]).map(d=>d===1?1:0);
@@ -1639,9 +1633,10 @@ function renderSeat(){
     const pairL=wide&&runLen===2&&cc===runStart;
     const pairR=wide&&runLen===2&&cc===runEnd;
     const below=wide&&rr<R-1&&c.seats[(rr+1)*C+cc];
-    const joinR=wide&&(c.dirs&&c.dirs[i]===2)&&cc<C-1&&isW(rr*C+cc+1);
-    const joinL=wide&&cc>0&&(c.dirs&&c.dirs[rr*C+cc-1]===2)&&isW(i);
-    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'jl':''} ${joinL?'jr':''}" data-i="${idx}">
+    const joinR=wide&&(c.dirs&&c.dirs[i]===2)&&cc<C-1&&c.seats[rr*C+cc+1];
+    const joinL=cc>0&&c.seats[rr*C+cc-1]&&(c.dirs&&c.dirs[rr*C+cc-1]===2);
+    if(joinL)return`<div class="st off"></div>`;
+    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'solo':''}" data-i="${idx}">
       <span class="stimg">
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
@@ -1669,6 +1664,8 @@ function renderSeat(){
   };
   if(swapMode){$('#swapBtn').classList.add('on');$('#swapBtn').textContent='바꾸기 끝'}
   $('#clsEdit').onclick=()=>openCls(c);
+  $('#clsMvL').onclick=()=>moveCur(-1);
+  $('#clsMvR').onclick=()=>moveCur(1);
   $('#shareSpk').onclick=shareSpeak;
   $('#bulkPh').onchange=e=>{const fs=[...e.target.files];if(fs.length)bulkPhotos(fs);e.target.value=''};
 }
@@ -1781,7 +1778,7 @@ async function shareSpeak(){
 function countSpeak(st){
   return (st.notes||[]).filter(n=>/발표/.test(n.t)).length;
 }
-function seatOrder(seats,cols){
+function seatOrder(seats,cols,dirs){
   const R=Math.ceil(seats.length/cols);
   const seen=Array(seats.length).fill(false),comps=[];
   for(let i=0;i<seats.length;i++){
@@ -1801,9 +1798,14 @@ function seatOrder(seats,cols){
       cr:rs.reduce((a,b)=>a+b,0)/rs.length,cc:cs.reduce((a,b)=>a+b,0)/cs.length});
   }
   comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
+  const skip=j=>{
+    if(!dirs)return false;
+    const jc=j%cols;
+    return jc>0&&seats[j-1]&&dirs[j-1]===2&&seats[j];
+  };
   const order=[];
   comps.forEach(cp=>{
-    const cells=[...cp.cells];
+    const cells=cp.cells.filter(x=>!skip(x));
     const rs=new Set(cells.map(x=>Math.floor(x/cols)));
     const csn=new Set(cells.map(x=>x%cols));
     if(rs.size===1)cells.sort((a,b)=>(a%cols)-(b%cols));
@@ -2106,9 +2108,6 @@ function openCls(c){
   dirs=c&&c.dirs?[...c.dirs]:Array(shape.length).fill(0);
   $('#clsNames').value=c?c.students.map(s=>s.leader?'('+s.n+')':s.n).join('\n'):'';
   $('#clsDel').hidden=!c;$('#clsDelSp').hidden=!!c;
-  $('#clsMoveWrap').hidden=!c;
-  $('#clsMoveL').onclick=()=>moveCls(-1);
-  $('#clsMoveR').onclick=()=>moveCls(1);
   $('#shapeMode').innerHTML=[['자리 켜고 끄기','on'],['앉는 방향','dir']]
     .map(([l,k])=>`<button class="chip" data-m="${k}" aria-pressed="${k==='on'}">${l}</button>`).join('');
   $$('#shapeMode .chip').forEach(b=>b.onclick=()=>{
@@ -2150,7 +2149,7 @@ function openCls(c){
   if(nm)$('#grpTot').value=nm;
 }
 function updCnt(){
-  const seats=shape.filter(Boolean).length;
+  const seats=seatOrder(shape,+$('#clsCols').value||6,dirs).length;
   const names=$('#clsNames').value.split('\n').map(x=>x.trim()).filter(Boolean).length;
   const el=$('#seatCnt');
   el.className='cnt'+(names>seats?' bad':'');
@@ -2224,6 +2223,15 @@ async function saveCls(){
   $('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;renderSeat();
   toast(editCls?'저장했습니다':'반을 만들었습니다');
 }
+async function moveCur(d){
+  const i=classes.findIndex(x=>x.id===curCls);
+  if(i<0)return;
+  const j=i+d;
+  if(j<0||j>=classes.length){toast(d<0?'이미 맨 앞입니다':'이미 맨 뒤입니다');return}
+  const t=classes[i];classes[i]=classes[j];classes[j]=t;
+  try{await set(K.cls,classes)}catch(e){}
+  renderSeat();toast('순서를 바꿨습니다');
+}
 async function moveCls(d){
   const i=classes.findIndex(x=>x.id===editCls);
   if(i<0)return;
@@ -2276,7 +2284,7 @@ function renderDetail(){
         ${st.ph?`<img data-ph="${st.ph}">`:`<span>사진<br>넣기</span>`}
         <input type="file" accept="image/*" id="phIn"></label>
       <div class="stuinfo">
-        <b>${esc(st.n)||'이름 없음'}</b>
+        <b>${esc(st.n)||'이름 없음'} <button class="lnk" id="nmEdit" style="font-size:13px;min-height:30px;padding:0 4px">바꾸기</button></b>
         <span>발표 ${countSpeak(st)}회 · 기록 ${notes.length}개</span>
         <button class="lnk" id="ldrTgl" style="display:block">${st.leader?'모둠장 해제':'모둠장으로 지정'}</button>
         ${st.ph?`<button class="lnk" id="phDel" style="display:block;margin-top:10px">사진 지우기</button>`:''}
@@ -2297,6 +2305,29 @@ function renderDetail(){
       <button class="rm" data-id="${n.id}">지우기</button></div>`).join('')
       :`<div class="empty">아직 기록이 없습니다.</div>`}`;
   paintPhotos($('#detailBody'));
+  $('#nmEdit').onclick=async()=>{
+    const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
+    const nn=prompt('이름',st2.n||'');
+    if(nn===null)return;
+    const name=nn.trim();
+    if(!name){toast('이름이 비어 있습니다');return}
+    const hasRec=(st2.notes||[]).length>0||st2.ph;
+    if(hasRec){
+      const keep=confirm(`'${st2.n}'의 기록 ${(st2.notes||[]).length}개와 사진이 저장돼 있습니다.\n\n기록을 유지할까요?\n\n[확인] 이름만 바꾸고 기록 유지\n[취소] 기록·사진을 비우고 새 학생으로`);
+      if(!keep){
+        if(!confirm('정말 기록과 사진을 지울까요? 되돌릴 수 없습니다.'))return;
+        if(st2.ph)await phDelKey(st2.ph);
+        for(const nt of (st2.notes||[]))if(nt.ph)await phDelKey(nt.ph);
+        c2.students[curSeat]={n:name,ph:'',notes:[],leader:false};
+      }else{
+        st2.n=name;
+      }
+    }else{
+      st2.n=name;
+    }
+    try{await set(K.cls,classes)}catch(e){}
+    renderDetail();toast('바꿨습니다');
+  };
   $('#ldrTgl').onclick=async()=>{
     const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
     st2.leader=!st2.leader;
