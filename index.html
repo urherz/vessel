@@ -52,6 +52,14 @@ header::before{
 }
 .brand{position:relative;display:flex;align-items:baseline;gap:11px}
 .brand h1{font-family:var(--serif);font-weight:600;font-size:27px;margin:0;letter-spacing:.02em}
+.synctop{
+  position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  border:1px solid var(--rule);background:var(--paper);border-radius:99px;
+  min-height:40px;padding:0 16px;font-size:13.5px;color:var(--ink-soft);
+  cursor:pointer;font-family:var(--sans);
+}
+.synctop:active{background:var(--paper-2)}
+.synctop.busy{opacity:.5;pointer-events:none}
 .brand span{font-size:13px;color:var(--ink-faint);letter-spacing:.08em}
 .today{position:relative;margin-top:2px;font-size:14px;color:var(--ink-soft)}
 
@@ -551,6 +559,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
   <div class="wrap">
     <div class="brand"><h1>Vessel</h1><span>교사의 리듬</span></div>
     <div class="today" id="todayLine">—</div>
+    <button class="synctop" id="syncTop">동기화</button>
   </div>
 </header>
 
@@ -1557,7 +1566,7 @@ function renderSeat(){
   }
   /* 모둠 감지: 붙어 있는 자리들을 한 모둠으로 */
   let glabels='';
-  if(c.gnames&&c.gnames.length){
+  {
     const seen=Array(c.seats.length).fill(false);
     const comps=[];
     for(let i=0;i<c.seats.length;i++){
@@ -1580,10 +1589,10 @@ function renderSeat(){
     comps.sort((a,b)=>a.minR-b.minR||a.minC-b.minC);
     const px=arr=>arr.map(v=>parseFloat(v));
     glabels=comps.map((cp,gi)=>{
-      if(!c.gnames[gi])return'';
+      const gname=(c.gnames&&c.gnames[gi])||((gi+1)+'모둠');
       let left=0;for(let k=0;k<cp.minC;k++)left+=parseFloat(colW[k])+gap;
       let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
-      return`<span class="gname" style="left:${left}px;top:${top-4}px">${esc(c.gnames[gi])}</span>`;
+      return`<span class="gname" style="left:${left}px;top:${top-4}px">${esc(gname)}</span>`;
     }).join('');
   }
   g.innerHTML=glabels+c.seats.map((on,i)=>{
@@ -1814,6 +1823,18 @@ async function buildSync(){
   const on=!!(ghTok&&gistId);
   $('#syncSetup').hidden=on;$('#syncOn').hidden=!on;
   if(on)setSyncStat('연결됨. 열 때마다 자동으로 받아옵니다.');
+  $('#syncTop').textContent=on?'동기화':'동기화 설정';
+  $('#syncTop').onclick=async()=>{
+    if(!(ghTok&&gistId)){
+      const tb=[...document.querySelectorAll('nav button')].find(x=>x.dataset.tab==='seat');
+      if(tb)tb.click();
+      setTimeout(()=>{const el=$('#syncStat');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},60);
+      return;
+    }
+    const b=$('#syncTop');b.classList.add('busy');b.textContent='…';
+    await syncPull(true);await syncPush();
+    b.classList.remove('busy');b.textContent='동기화';toast('동기화했습니다');
+  };
   $('#ghConnect').onclick=async()=>{
     const t=$('#ghTok').value.trim();
     if(!t){toast('토큰을 붙여넣어주세요');return}
@@ -1823,6 +1844,7 @@ async function buildSync(){
       gistId=await findOrCreateGist();
       await set(K.gh,ghTok);await set(K.gist,gistId);
       $('#syncSetup').hidden=true;$('#syncOn').hidden=false;
+      $('#syncTop').textContent='동기화';
       await syncPull();
       toast('연결했습니다');
     }catch(e){ghTok='';setSyncStat(e.message||'연결 실패')}
@@ -1834,6 +1856,7 @@ async function buildSync(){
     ghTok='';gistId='';
     try{await rawDel(K.gh);await rawDel(K.gist)}catch(e){}
     $('#syncSetup').hidden=false;$('#syncOn').hidden=true;
+    $('#syncTop').textContent='동기화 설정';
     setSyncStat('GitHub 계정으로 여러 기기에서 같은 내용을 봅니다.');
   };
 }
@@ -1997,7 +2020,7 @@ function openCls(c){
   $('#clsGnames').value=(c&&c.gnames?c.gnames.join(', '):'');
   shape=c?[...c.seats]:Array(30).fill(true);
   dirs=c&&c.dirs?[...c.dirs]:Array(shape.length).fill(0);
-  $('#clsNames').value=c?c.students.map(s=>s.n).join('\n'):'';
+  $('#clsNames').value=c?c.students.map(s=>s.leader?'('+s.n+')':s.n).join('\n'):'';
   $('#clsDel').hidden=!c;$('#clsDelSp').hidden=!!c;
   $('#shapeMode').innerHTML=[['자리 켜고 끄기','on'],['앉는 방향','dir']]
     .map(([l,k])=>`<button class="chip" data-m="${k}" aria-pressed="${k==='on'}">${l}</button>`).join('');
@@ -2095,12 +2118,16 @@ function applyPreset(g){
 async function saveCls(){
   const name=$('#clsName').value.trim();
   if(!name){toast('반 이름을 적어주세요');return}
-  const names=$('#clsNames').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  const names=$('#clsNames').value.split('\n').map(x=>x.trim()).filter(Boolean)
+    .map(x=>{
+      const m=x.match(/^[(（](.+)[)）]$/);
+      return m?{n:m[1].trim(),leader:true}:{n:x,leader:false};
+    });
   const cols=+$('#clsCols').value||6,rows=+$('#clsRows').value||5;
   const prev=classes.find(x=>x.id===editCls);
-  const students=names.map((n,i)=>{
-    const old=prev&&prev.students.find(s=>s.n===n);
-    return old?{...old,n}:{n,ph:'',notes:[]};
+  const students=names.map(nm=>{
+    const old=prev&&prev.students.find(s=>s.n===nm.n);
+    return old?{...old,n:nm.n,leader:nm.leader}:{n:nm.n,leader:nm.leader,ph:'',notes:[]};
   });
   const gnames=$('#clsGnames').value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
   const data={name,cols,rows,goal:+$('#clsGoal').value||3,gnames,seats:[...shape],dirs:[...dirs],students};
