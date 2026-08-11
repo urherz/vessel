@@ -1941,6 +1941,26 @@ function attParse(txt){
   classes.forEach(c=>c.students.forEach(st=>{if(st.n)allNames.push(st.n)}));
   allNames.sort((a,b)=>b.length-a.length);
   for(const nm of allNames){if(txt.includes(nm)){r.n=nm;break}}
+  if(!r.n){
+    const stop=/^(안녕|오늘|내일|어제|선생|학교|병원|담임|학년|우리|저희|아이|자녀|학생|연락|말씀|죄송|감사|등교|하교|수업|시간|사유|가정|체험|학습|신청|예정|진료|치과|내과|감기|몸살|사정|이유|참석|불참)/;
+    const pats=[
+      /([가-힣]{2,4})(?:이|가)?\s*(?:학생|어머니|아버지|엄마|아빠|보호자|학부모)/,
+      /(?:\d\s*반|학년)\s+([가-힣]{2,4})(?:\s|입니다|이에요|예요|이고|,|$)/,
+      /([가-힣]{2,4})\s*(?:올림|드림)\s*$/,
+      /[-–—]\s*([가-힣]{2,4})\s*$/,
+      /^([가-힣]{2,4}?)(?:이가|이는|이도|가|는)\s/,
+      /([가-힣]{2,4}?)(?:이가|이는)\s/
+    ];
+    for(const re of pats){
+      const m=txt.match(re);
+      if(!m)continue;
+      const cand=m[1];
+      if(stop.test(cand))continue;
+      const full=allNames.find(nm=>nm.endsWith(cand)||nm===cand);
+      r.n=full||cand;
+      break;
+    }
+  }
   return r;
 }
 async function buildAtt(){
