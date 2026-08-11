@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
-<title>Vessel — 교사의 리듬</title>
+<title>Vessel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
@@ -570,7 +570,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
 <header>
   <div class="wrap">
-    <div class="brand"><h1>Vessel</h1><span>교사의 리듬</span></div>
+    <div class="brand"><h1>Vessel</h1></div>
     <div class="today" id="todayLine">—</div>
     <button class="synctop" id="syncTop">동기화</button>
   </div>
@@ -1650,15 +1650,7 @@ function renderSeat(){
     }
     const idx=posOf[i];
     const st=c.students[idx]||{n:''};
-    let defName='';
-    if(!st.n&&idx!==undefined){
-      let acc=0,g=0,p=idx;
-      for(;g<ordO.gsizes.length;g++){
-        if(p<ordO.gsizes[g])break;
-        p-=ordO.gsizes[g];
-      }
-      defName=(g+1)+'-'+(p+1);
-    }
+    const defName=(!st.n&&idx!==undefined)?defNameOf(c,idx):'';
     const n=(st.notes||[]).length;
     const dr=rdirs[i];
     const sp=countSpeak(st),goal=c.goal||3;
@@ -1865,6 +1857,15 @@ function seatOrder(seats,cols,dirs){
     order.push(...cells);
   });
   return order;
+}
+function defNameOf(c,idx){
+  const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
+  let g=0,p=idx;
+  for(;g<ord.gsizes.length;g++){
+    if(p<ord.gsizes[g])break;
+    p-=ord.gsizes[g];
+  }
+  return (g+1)+'-'+(p+1);
 }
 function countNotes(c){return c.students.reduce((a,s)=>a+((s.notes||[]).length),0)}
 
@@ -2312,8 +2313,8 @@ async function swapStudents(a,b){
 }
 function openSeat(i){
   curSeat=i;
-  const c=classes.find(x=>x.id===curCls),st=c.students[i];
-  if(!st){toast('이 자리엔 아직 이름이 없습니다');return}
+  const c=classes.find(x=>x.id===curCls);
+  while(c.students.length<=i)c.students.push({n:'',ph:'',notes:[]});
   pendPh='';$('#detailName').textContent='학생 기록';
   renderDetail();
   $('#seatBrowse').hidden=true;$('#seatDetail').hidden=false;window.scrollTo(0,0);
@@ -2327,7 +2328,7 @@ function renderDetail(){
         ${st.ph?`<img data-ph="${st.ph}">`:`<span>사진<br>넣기</span>`}
         <input type="file" accept="image/*" id="phIn"></label>
       <div class="stuinfo">
-        <b>${esc(st.n)||'이름 없음'} <button class="lnk" id="nmEdit" style="font-size:13px;min-height:30px;padding:0 4px">바꾸기</button></b>
+        <b>${esc(st.n)||defNameOf(classes.find(x=>x.id===curCls),curSeat)} <button class="lnk" id="nmEdit" style="font-size:13px;min-height:30px;padding:0 4px">바꾸기</button></b>
         <span>발표 ${countSpeak(st)}회 · 기록 ${notes.length}개</span>
         <button class="lnk" id="ldrTgl" style="display:block">${st.leader?'모둠장 해제':'모둠장으로 지정'}</button>
         ${st.ph?`<button class="lnk" id="phDel" style="display:block;margin-top:10px">사진 지우기</button>`:''}
