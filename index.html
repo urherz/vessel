@@ -2611,14 +2611,11 @@ function renderDetail(){
       <div id="notePhPrev"></div>
     </div>
     <p class="eyebrow" style="margin-top:28px">진로</p>
-    <div class="row" style="gap:8px">
-      <input id="hopeIn" placeholder="희망 진로" value="${esc(st.hope||'')}" style="flex:1">
-      <button class="ghost" id="hopeSave" style="min-width:64px">저장</button>
-    </div>
+    <input id="hopeIn" placeholder="희망 진로" value="${esc(st.hope||'')}">
     <div class="mt">
       <textarea id="careerIn" rows="2" placeholder="상담·세특에 쓸 기록"></textarea>
       <div class="mt row" style="gap:8px">
-        <button class="act" id="careerAdd" style="flex:1">진로 기록 저장</button>
+        <button class="act" id="careerAdd" style="flex:1">저장</button>
         ${(st.career||[]).length?`<button class="ghost" id="careerCopy" style="min-width:100px">전체 복사</button>`:''}
       </div>
     </div>
@@ -2633,20 +2630,16 @@ function renderDetail(){
       <button class="rm" data-id="${n.id}">지우기</button></div>`).join('')
       :`<div class="empty">아직 기록이 없습니다.</div>`}`;
   paintPhotos($('#detailBody'));
-  $('#hopeSave').onclick=async()=>{
+  $('#careerAdd').onclick=async()=>{
     const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
     st2.hope=$('#hopeIn').value.trim();
-    try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
-    toast('저장했습니다');
-  };
-  $('#careerAdd').onclick=async()=>{
     const v=$('#careerIn').value.trim();
-    if(!v){toast('내용을 적어주세요');return}
-    const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
-    if(!st2.career)st2.career=[];
-    st2.career.push({id:'c'+Date.now(),d:todayKey().slice(5).replace('-','/'),t:v});
+    if(v){
+      if(!st2.career)st2.career=[];
+      st2.career.push({id:'c'+Date.now(),d:todayKey().slice(5).replace('-','/'),t:v});
+    }
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
-    renderDetail();toast('남겼습니다');
+    renderDetail();toast('저장했습니다');
   };
   const ccBtn=$('#careerCopy');
   if(ccBtn)ccBtn.onclick=()=>{
