@@ -70,7 +70,7 @@ nav{
   background:rgba(242,241,235,.96);backdrop-filter:saturate(1.4) blur(8px);
   border-top:1px solid var(--rule);padding-bottom:var(--safe);
 }
-nav .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
 nav button{
   background:none;border:0;height:var(--nav);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
@@ -493,6 +493,17 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 .note{font-size:16px;color:var(--ink-soft);line-height:1.75;border-top:1px solid var(--rule);padding-top:13px;margin:16px 0 0}
 .hint{font-size:16px;color:var(--ink-faint);margin:10px 0 0;text-align:center}
 
+.arow{display:flex;align-items:center;gap:9px;border-top:1px solid var(--rule);padding:11px 0 3px}
+.arow:first-child{border-top:0}
+.ad{font-family:var(--serif);font-size:14px;color:var(--ink);flex:none;width:44px}
+.ab{flex:none;font-size:12.5px;padding:2px 9px;border-radius:99px;color:#F7F2F0}
+.ab-r{background:var(--seal)}
+.ab-o{background:#C07A3A}
+.ab-y{background:#B99A3B}
+.ab-g{background:var(--celadon-deep)}
+.an{flex:1;font-size:16px}
+.arow .lnk{flex:none;min-height:36px;font-size:13px}
+.atx{margin:2px 0 8px 53px;font-size:13.5px;color:var(--ink-faint);line-height:1.6;text-wrap:pretty}
 .lrow{border:1px solid var(--rule);border-radius:3px;padding:13px 14px 6px;margin-bottom:9px;background:#FBFAF6}
 .lh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:7px}
 .lw{font-family:var(--serif);font-size:13.5px;color:var(--ink)}
@@ -577,6 +588,37 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 </header>
 
 <main class="wrap">
+
+  <section id="p-att" class="panel" hidden>
+    <h2 class="sec">출결</h2>
+    <p class="lede">받은 메시지를 붙여넣으면 날짜와 유형을 알아서 읽습니다.</p>
+
+    <label class="f" for="attMsg">받은 메시지</label>
+    <textarea id="attMsg" rows="3" placeholder="문자 내용을 그대로 붙여넣으세요"></textarea>
+
+    <div class="mt row" style="gap:8px;flex-wrap:wrap">
+      <input type="date" id="attDate" style="flex:1;min-width:130px">
+      <input id="attName" placeholder="이름" style="flex:1;min-width:90px">
+    </div>
+    <div class="chips mt" id="attTypes"></div>
+    <div class="mt"><button class="act" id="attSave">저장</button></div>
+
+    <div class="row" style="justify-content:space-between;margin-top:30px">
+      <button class="ghost" id="attPrev" style="min-width:46px">◀</button>
+      <span class="eyebrow" id="attMonth" style="margin:0"></span>
+      <button class="ghost" id="attNext" style="min-width:46px">▶</button>
+    </div>
+    <div id="attList" class="mt"></div>
+
+    <div class="card" style="margin-top:22px">
+      <p class="eyebrow">월말 집계 (메일 머지)</p>
+      <p style="font-size:14.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.7">이름별 결석·조퇴·지각 횟수를 표로 만듭니다.</p>
+      <div class="row" style="gap:8px">
+        <button class="ghost" id="attCopy" style="flex:1;min-height:46px">텍스트 복사</button>
+        <button class="ghost" id="attCsv" style="flex:1;min-height:46px">엑셀(CSV) 받기</button>
+      </div>
+    </div>
+  </section>
 
   <section id="p-today" class="panel">
     <p class="bkalert" id="bkAlert" hidden></p>
@@ -853,6 +895,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
 <nav>
   <div class="inner" role="tablist">
+    <button role="tab" data-tab="att" aria-selected="false">출결<i></i></button>
     <button role="tab" data-tab="today" aria-selected="true">오늘<i></i></button>
     <button role="tab" data-tab="rhythm" aria-selected="false">리듬<i></i></button>
     <button role="tab" data-tab="cards" aria-selected="false">대응<i></i></button>
@@ -1035,7 +1078,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',att:'kan:att',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1146,7 +1189,7 @@ async function boot(){
   term=await get(K.term,null); if(!term){term={start:'2026-03-02',end:'2027-02-04',perWeek:3};try{await set(K.term,term)}catch(e){}}
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
   if(ghTok&&gistId)await syncPull(true);
-  buildToday();buildCards();await buildLog();await buildSeat();await buildSync();buildRhythm();buildTerm();renderBkInfo();
+  buildToday();buildCards();await buildLog();await buildSeat();await buildAtt();await buildSync();buildRhythm();buildTerm();renderBkInfo();
 }
 
 $$('nav button').forEach(b=>b.onclick=()=>{
@@ -1155,7 +1198,7 @@ $$('nav button').forEach(b=>b.onclick=()=>{
     $('#seatSetup').hidden=true;$('#seatDetail').hidden=true;$('#seatBrowse').hidden=false;
   }
   $$('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-  ['today','rhythm','cards','log','seat'].forEach(t=>$('#p-'+t).hidden=(t!==b.dataset.tab));
+  ['att','today','rhythm','cards','log','seat'].forEach(t=>$('#p-'+t).hidden=(t!==b.dataset.tab));
   window.scrollTo(0,0);
 });
 
@@ -1545,6 +1588,7 @@ function renderSeat(){
         <button class="ghost" id="clsMvR" title="탭 뒤로">▶</button>
         <button class="ghost" id="flipBtn">학생 시점</button>
         <button class="ghost" id="swapBtn">자리 바꾸기</button>
+        <button class="ghost" id="clsCopy2">반 복사</button>
         <button class="ghost" id="clsEdit">반 수정</button>
       </span>
     </div>
@@ -1698,6 +1742,7 @@ function renderSeat(){
   };
   if(swapMode){$('#swapBtn').classList.add('on');$('#swapBtn').textContent='바꾸기 끝'}
   $('#clsEdit').onclick=()=>openCls(c);
+  $('#clsCopy2').onclick=()=>{editCls=curCls;copyCls()};
   $('#clsMvL').onclick=()=>moveCur(-1);
   $('#clsMvR').onclick=()=>moveCur(1);
   $('#shareSpk').onclick=shareSpeak;
@@ -1869,6 +1914,126 @@ function defNameOf(c,idx){
 }
 function countNotes(c){return c.students.reduce((a,s)=>a+((s.notes||[]).length),0)}
 
+/* ── 출결 ── */
+const ATT_TYPES=['결석','조퇴','지각','체험학습','외출','기타'];
+let atts=[],attType='결석',attMon='';
+function attParse(txt){
+  const r={d:todayKey(),t:'기타',n:''};
+  if(/결석/.test(txt))r.t='결석';
+  else if(/조퇴/.test(txt))r.t='조퇴';
+  else if(/지각/.test(txt))r.t='지각';
+  else if(/체험/.test(txt))r.t='체험학습';
+  else if(/외출/.test(txt))r.t='외출';
+  const now=new Date();
+  if(/내일/.test(txt)){const d=new Date(now.getTime()+864e5);r.d=d.toISOString().slice(0,10)}
+  else if(/어제/.test(txt)){const d=new Date(now.getTime()-864e5);r.d=d.toISOString().slice(0,10)}
+  else{
+    const m=txt.match(/(\d{1,2})\s*[월\/.]\s*(\d{1,2})\s*일?/);
+    if(m){
+      const mo=+m[1],dy=+m[2];
+      if(mo>=1&&mo<=12&&dy>=1&&dy<=31){
+        let y=now.getFullYear();
+        r.d=y+'-'+String(mo).padStart(2,'0')+'-'+String(dy).padStart(2,'0');
+      }
+    }
+  }
+  const allNames=[];
+  classes.forEach(c=>c.students.forEach(st=>{if(st.n)allNames.push(st.n)}));
+  allNames.sort((a,b)=>b.length-a.length);
+  for(const nm of allNames){if(txt.includes(nm)){r.n=nm;break}}
+  return r;
+}
+async function buildAtt(){
+  atts=await get(K.att,[]);
+  attMon=todayKey().slice(0,7);
+  $('#attDate').value=todayKey();
+  $('#attTypes').innerHTML=ATT_TYPES.map(t=>`<button class="chip" data-t="${t}" aria-pressed="${t===attType}">${t}</button>`).join('');
+  $$('#attTypes .chip').forEach(b=>b.onclick=()=>{
+    attType=b.dataset.t;
+    $$('#attTypes .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  });
+  $('#attMsg').oninput=()=>{
+    const v=$('#attMsg').value;
+    if(!v.trim())return;
+    const r=attParse(v);
+    $('#attDate').value=r.d;
+    if(r.n)$('#attName').value=r.n;
+    attType=r.t;
+    $$('#attTypes .chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.t===r.t));
+  };
+  $('#attSave').onclick=async()=>{
+    const n=$('#attName').value.trim();
+    if(!n){toast('이름을 확인해주세요');return}
+    atts=[{id:'a'+Date.now(),d:$('#attDate').value||todayKey(),t:attType,n,txt:$('#attMsg').value.trim()},...atts];
+    atts.sort((a,b)=>a.d<b.d?1:-1);
+    try{await set(K.att,atts)}catch(e){toast('저장하지 못했습니다');return}
+    $('#attMsg').value='';$('#attName').value='';
+    renderAtt();toast('기록했습니다');
+  };
+  $('#attPrev').onclick=()=>{shiftMon(-1)};
+  $('#attNext').onclick=()=>{shiftMon(1)};
+  $('#attCopy').onclick=()=>attExport(false);
+  $('#attCsv').onclick=()=>attExport(true);
+  renderAtt();
+}
+function shiftMon(d){
+  const [y,m]=attMon.split('-').map(Number);
+  const nd=new Date(y,m-1+d,1);
+  attMon=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0');
+  renderAtt();
+}
+function renderAtt(){
+  $('#attMonth').textContent=attMon.replace('-','년 ')+'월';
+  const list=atts.filter(x=>x.d.slice(0,7)===attMon);
+  if(!list.length){$('#attList').innerHTML=`<div class="empty">이 달의 기록이 없습니다.</div>`;return}
+  $('#attList').innerHTML=list.map(x=>`
+    <div class="arow">
+      <span class="ad">${x.d.slice(5).replace('-','/')}</span>
+      <span class="ab ab-${x.t==='결석'?'r':x.t==='조퇴'?'o':x.t==='지각'?'y':'g'}">${x.t}</span>
+      <span class="an">${esc(x.n)}</span>
+      <button class="lnk" data-ad="${x.id}">지우기</button>
+    </div>
+    ${x.txt?`<p class="atx">${esc(x.txt)}</p>`:''}`).join('');
+  $$('#attList [data-ad]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('이 기록을 지울까요?'))return;
+    atts=atts.filter(x=>x.id!==b.dataset.ad);
+    try{await set(K.att,atts)}catch(e){}
+    renderAtt();
+  });
+}
+function attExport(csv){
+  const list=atts.filter(x=>x.d.slice(0,7)===attMon);
+  if(!list.length){toast('이 달의 기록이 없습니다');return}
+  const per={};
+  list.forEach(x=>{
+    if(!per[x.n])per[x.n]={};
+    per[x.n][x.t]=(per[x.n][x.t]||0)+1;
+  });
+  const types=ATT_TYPES.filter(t=>list.some(x=>x.t===t));
+  const sep=csv?',':'\t';
+  const rows=[['이름',...types].join(sep)];
+  Object.keys(per).sort().forEach(n=>{
+    rows.push([n,...types.map(t=>per[n][t]||0)].join(sep));
+  });
+  const out=rows.join('\n');
+  if(csv){
+    const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='출결_'+attMon+'.csv';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);
+    toast('다운로드했습니다');
+  }else{
+    (navigator.clipboard?navigator.clipboard.writeText(out):Promise.reject()).then(
+      ()=>toast('복사했습니다. 붙여넣기 하세요'),
+      ()=>{const ta=document.createElement('textarea');ta.value=out;ta.style.cssText='position:fixed;opacity:0';
+        document.body.appendChild(ta);ta.select();
+        try{document.execCommand('copy');toast('복사했습니다')}catch(e){toast('복사하지 못했습니다')}
+        ta.remove();}
+    );
+  }
+}
 /* ── 기기 동기화 (GitHub 비공개 Gist) ── */
 let ghTok='',gistId='',syncTimer=null,syncBusy=false;
 async function collectAll(){
@@ -1878,7 +2043,7 @@ async function collectAll(){
     for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
   }
   return {v:1,at:Date.now(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),
+    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
 }
 async function applyAll(d){
@@ -1891,7 +2056,7 @@ async function applyAll(d){
   if(d.term){term=d.term;try{await set(K.term,term)}catch(e){}}
   try{await set(K.syncAt,d.at)}catch(e){}
   curCls=classes.length?classes[0].id:null;
-  renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();
+  renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();if(typeof renderAtt==='function')renderAtt();
 }
 function ghFetch(url,opt={}){
   opt.headers=Object.assign({'Authorization':'token '+ghTok,'Accept':'application/vnd.github+json'},opt.headers||{});
@@ -2010,7 +2175,7 @@ async function exportAll(auto){
     for(const n of (st.notes||[]))if(n.ph){const d=await phGet(n.ph);if(d)imgs[n.ph]=d}
   }
   const data={v:1,at:new Date().toISOString(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),
+    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const d=new Date(),z=n=>String(n).padStart(2,'0');
@@ -2060,7 +2225,7 @@ async function importAll(file){
       if(d.week){week=d.week;await set(K.week,week)}
       if(d.term){term=d.term;await set(K.term,term)}
       curCls=classes.length?classes[0].id:null;
-      renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();
+      renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();if(typeof renderAtt==='function')renderAtt();
       toast('불러왔습니다');
     }catch(e){toast('불러오지 못했습니다')}
   };
@@ -2266,6 +2431,24 @@ async function saveCls(){
   await set(K.cls,classes);
   $('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;renderSeat();
   toast(editCls?'저장했습니다':'반을 만들었습니다');
+}
+async function copyCls(){
+  const src=classes.find(x=>x.id===editCls);
+  if(!src)return;
+  const nn=prompt('새 반 이름',src.name+' 복사');
+  if(nn===null)return;
+  const name=nn.trim()||src.name+' 복사';
+  const id='k'+Date.now();
+  classes=[...classes,{
+    id,name,cols:src.cols,rows:src.rows,goal:src.goal||3,
+    gnames:[...(src.gnames||[])],
+    seats:[...src.seats],dirs:[...(src.dirs||[])],
+    students:src.students.map(()=>({n:'',ph:'',notes:[]}))
+  }];
+  try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
+  curCls=id;
+  $('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;
+  renderSeat();toast(`'${name}' 반을 만들었습니다`);
 }
 async function moveCur(d){
   const i=classes.findIndex(x=>x.id===curCls);
