@@ -593,6 +593,15 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
     <h2 class="sec">출결</h2>
     <p class="lede">받은 메시지를 붙여넣으면 날짜와 유형을 알아서 읽습니다.</p>
 
+    <button class="disclose" id="attRosterTgl" aria-expanded="false" style="border:1px solid var(--rule);border-radius:3px;margin-bottom:14px">
+      <span id="attRosterLab">명렬표</span><em></em>
+    </button>
+    <div id="attRosterBox" hidden style="border:1px solid var(--rule);border-radius:3px;padding:14px;margin-bottom:16px;background:#FBFAF6">
+      <p style="font-size:14.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.7">한 줄에 한 명씩, 학번을 앞에. 엑셀에서 두 열 복사해 붙여도 됩니다.</p>
+      <textarea id="attRoster" rows="8" placeholder="20101 김○○&#10;20102 이○○"></textarea>
+      <div class="mt"><button class="act" id="attRosterSave">저장</button></div>
+    </div>
+
     <label class="f" for="attMsg">받은 메시지</label>
     <textarea id="attMsg" rows="3" placeholder="문자 내용을 그대로 붙여넣으세요"></textarea>
 
@@ -1078,7 +1087,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',att:'kan:att',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1917,6 +1926,10 @@ function countNotes(c){return c.students.reduce((a,s)=>a+((s.notes||[]).length),
 /* ── 출결 ── */
 const ATT_TYPES=['결석','조퇴','지각','체험학습','외출','기타'];
 let atts=[],attType='결석',attMon='';
+function updRosterLab(){
+  const el=$('#attRosterLab');
+  if(el)el.textContent=attRoster.length?`명렬표 · ${attRoster.length}명`:'명렬표';
+}
 function attParse(txt){
   const r={d:todayKey(),t:'기타',n:''};
   if(/결석/.test(txt))r.t='결석';
@@ -1937,7 +1950,7 @@ function attParse(txt){
       }
     }
   }
-  const allNames=[];
+  const allNames=attRoster.map(x=>x.n);
   classes.forEach(c=>c.students.forEach(st=>{if(st.n)allNames.push(st.n)}));
   allNames.sort((a,b)=>b.length-a.length);
   for(const nm of allNames){if(txt.includes(nm)){r.n=nm;break}}
@@ -1963,8 +1976,31 @@ function attParse(txt){
   }
   return r;
 }
+let attRoster=[];
 async function buildAtt(){
   atts=await get(K.att,[]);
+  attRoster=(await get(K.attR,[])).map(x=>typeof x==='string'?{no:'',n:x}:x);
+  $('#attRoster').value=attRoster.map(x=>x.no?x.no+' '+x.n:x.n).join('\n');
+  updRosterLab();
+  $('#attRosterTgl').onclick=()=>{
+    const open=$('#attRosterTgl').getAttribute('aria-expanded')==='true';
+    $('#attRosterTgl').setAttribute('aria-expanded',String(!open));
+    $('#attRosterBox').hidden=open;
+  };
+  $('#attRosterSave').onclick=async()=>{
+    attRoster=$('#attRoster').value.split('\n').map(x=>x.trim()).filter(Boolean)
+      .map(line=>{
+        const parts=line.split(/[\s,\t]+/).filter(Boolean);
+        if(parts.length>=2&&/^\d{3,6}$/.test(parts[0]))return{no:parts[0],n:parts.slice(1).join(' ')};
+        if(parts.length>=2&&/^\d{3,6}$/.test(parts[parts.length-1]))return{no:parts[parts.length-1],n:parts.slice(0,-1).join(' ')};
+        return{no:'',n:line};
+      });
+    try{await set(K.attR,attRoster)}catch(e){toast('저장하지 못했습니다');return}
+    updRosterLab();
+    $('#attRosterTgl').setAttribute('aria-expanded','false');
+    $('#attRosterBox').hidden=true;
+    toast(attRoster.length+'명 저장했습니다');
+  };
   attMon=todayKey().slice(0,7);
   $('#attDate').value=todayKey();
   $('#attTypes').innerHTML=ATT_TYPES.map(t=>`<button class="chip" data-t="${t}" aria-pressed="${t===attType}">${t}</button>`).join('');
@@ -2031,9 +2067,15 @@ function attExport(csv){
   });
   const types=ATT_TYPES.filter(t=>list.some(x=>x.t===t));
   const sep=csv?',':'\t';
-  const rows=[['이름',...types].join(sep)];
-  Object.keys(per).sort().forEach(n=>{
-    rows.push([n,...types.map(t=>per[n][t]||0)].join(sep));
+  const noOf=n=>{const hit=attRoster.find(x=>x.n===n);return hit?hit.no:''};
+  const rows=[['학번','이름',...types].join(sep)];
+  Object.keys(per).sort((a,b)=>{
+    const na=noOf(a),nb=noOf(b);
+    if(na&&nb)return na<nb?-1:1;
+    if(na)return -1;if(nb)return 1;
+    return a<b?-1:1;
+  }).forEach(n=>{
+    rows.push([noOf(n),n,...types.map(t=>per[n][t]||0)].join(sep));
   });
   const out=rows.join('\n');
   if(csv){
@@ -2063,7 +2105,7 @@ async function collectAll(){
     for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
   }
   return {v:1,at:Date.now(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),
+    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
 }
 async function applyAll(d){
@@ -2195,7 +2237,7 @@ async function exportAll(auto){
     for(const n of (st.notes||[]))if(n.ph){const d=await phGet(n.ph);if(d)imgs[n.ph]=d}
   }
   const data={v:1,at:new Date().toISOString(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),
+    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const d=new Date(),z=n=>String(n).padStart(2,'0');
