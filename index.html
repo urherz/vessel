@@ -212,8 +212,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   width:auto;padding:0;
 }
 .st.talld .nmt{
-  writing-mode:vertical-rl;width:auto;white-space:nowrap;
-  letter-spacing:.08em;overflow:visible;
+  width:auto;white-space:nowrap;letter-spacing:-.04em;overflow:visible;
 }
 .st.talld.fr .nmx{left:1px}
 .st.talld.fl .nmx{right:1px}
@@ -1646,13 +1645,7 @@ function renderSeat(){
       let left=0;for(let k=0;k<cp.minC;k++)left+=parseFloat(colW[k])+gap;
       let w=0;for(let k=cp.minC;k<=cp.maxC;k++)w+=parseFloat(colW[k]);
       w+=gap*(cp.maxC-cp.minC);
-      let top=0;
-      if(viewFlip){
-        for(let k=0;k<=cp.maxR;k++)top+=parseFloat(rowH[k])+gap;
-        top-=gap;top+=3;
-        return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top}px;transform:translateX(-50%)">${esc(gname)}</span>`;
-      }
-      for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
+      let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
       return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top-9}px;transform:translateX(-50%)">${esc(gname)}</span>`;
     }).join('');
   }
@@ -1665,6 +1658,15 @@ function renderSeat(){
     }
     const idx=posOf[i];
     const st=c.students[idx]||{n:''};
+    let defName='';
+    if(!st.n&&idx!==undefined){
+      let acc=0,g=0,p=idx;
+      for(;g<ordO.gsizes.length;g++){
+        if(p<ordO.gsizes[g])break;
+        p-=ordO.gsizes[g];
+      }
+      defName=(g+1)+'-'+(p+1);
+    }
     const n=(st.notes||[]).length;
     const dr=rdirs[i];
     const sp=countSpeak(st),goal=c.goal||3;
@@ -1686,7 +1688,7 @@ function renderSeat(){
         ${n?`<span class="dot"></span>`:''}
         <i class="chair ${st.leader?'ldr':''}"></i>
       </span>
-      <span class="nmx"><span class="nmt">${esc(st.n)||'&nbsp;'}</span></span></button>`;
+      <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>{
@@ -1851,9 +1853,10 @@ function seatOrder(seats,cols,dirs){
     const jc=j%cols;
     return jc>0&&seats[j-1]&&dirs[j-1]===2&&seats[j];
   };
-  const order=[];
+  const order=[];order.gsizes=[];
   comps.forEach(cp=>{
     const cells=cp.cells.filter(x=>!skip(x));
+    order.gsizes.push(cells.length);
     const rs=new Set(cells.map(x=>Math.floor(x/cols)));
     const csn=new Set(cells.map(x=>x%cols));
     if(rs.size===1)cells.sort((a,b)=>(a%cols)-(b%cols));
