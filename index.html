@@ -1585,7 +1585,7 @@ async function paintPhotos(root){
     if(d)el.src=d; else el.style.display='none';
   }
 }
-let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,viewFlip=false;
+let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,grpSwapMode=false,grpSel=null,viewFlip=false;
 
 async function buildSeat(){
   classes=await get(K.cls,[]);
@@ -1626,6 +1626,7 @@ function renderSeat(){
         <button class="ghost" id="flipBtn">학생 시점</button>
         <button class="ghost" id="lotBtn">자리 뽑기</button>
         <button class="ghost" id="swapBtn">자리 바꾸기</button>
+        <button class="ghost" id="gswapBtn">모둠 바꾸기</button>
         <button class="ghost" id="clsCopy2">반 복사</button>
         <button class="ghost" id="clsEdit">반 수정</button>
       </span>
@@ -1757,8 +1758,20 @@ function renderSeat(){
       <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
+  if(grpSwapMode&&grpSel!==null){
+    $$('#seatGrid .st[data-i]').forEach(b=>{
+      if(groupOf(ordO.gsizes,+b.dataset.i)===grpSel)b.classList.add('selsw');
+    });
+  }
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>{
     const idx=+b.dataset.i;
+    if(grpSwapMode){
+      const g=groupOf(ordO.gsizes,idx);
+      if(g<0)return;
+      if(grpSel===null){grpSel=g;renderSeat();return}
+      if(grpSel===g){grpSel=null;renderSeat();return}
+      swapGroups(grpSel,g);return;
+    }
     if(swapMode){
       if(swapFirst===null){swapFirst=idx;b.classList.add('selsw');return}
       if(swapFirst===idx){swapFirst=null;b.classList.remove('selsw');return}
@@ -1793,8 +1806,18 @@ function renderSeat(){
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
     renderSeat();toast('뽑았습니다. 다시 뽑으려면 한 번 더.');
   };
+  $('#gswapBtn').onclick=()=>{
+    grpSwapMode=!grpSwapMode;grpSel=null;
+    if(grpSwapMode){swapMode=false;swapFirst=null;$('#swapBtn').classList.remove('on');$('#swapBtn').textContent='자리 바꾸기'}
+    $('#gswapBtn').classList.toggle('on',grpSwapMode);
+    $('#gswapBtn').textContent=grpSwapMode?'바꾸기 끝':'모둠 바꾸기';
+    if(grpSwapMode)toast('바꿀 두 모둠을 차례로 누르세요');
+    renderSeat();
+  };
+  if(grpSwapMode){$('#gswapBtn').classList.add('on');$('#gswapBtn').textContent='바꾸기 끝'}
   $('#swapBtn').onclick=()=>{
     swapMode=!swapMode;swapFirst=null;
+    if(swapMode){grpSwapMode=false;grpSel=null;$('#gswapBtn').classList.remove('on');$('#gswapBtn').textContent='모둠 바꾸기'}
     $('#swapBtn').classList.toggle('on',swapMode);
     $('#swapBtn').textContent=swapMode?'바꾸기 끝':'자리 바꾸기';
     if(swapMode)toast('바꿀 두 자리를 차례로 누르세요');
@@ -1962,6 +1985,14 @@ function seatOrder(seats,cols,dirs){
     order.push(...cells);
   });
   return order;
+}
+function groupOf(gsizes,idx){
+  let g=0,p=idx;
+  for(;g<gsizes.length;g++){
+    if(p<gsizes[g])return g;
+    p-=gsizes[g];
+  }
+  return -1;
 }
 function defNameOf(c,idx){
   const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
@@ -2671,6 +2702,21 @@ async function delCls(){
 }
 
 /* 학생 상세 */
+async function swapGroups(ga,gb){
+  const c=classes.find(x=>x.id===curCls);
+  const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
+  const gs=ord.gsizes;
+  if(gs[ga]!==gs[gb]){toast(`인원이 다릅니다 (${gs[ga]}명 · ${gs[gb]}명). 같은 인원 모둠끼리 바꿀 수 있습니다.`);grpSel=null;renderSeat();return}
+  const off=g=>gs.slice(0,g).reduce((a,b)=>a+b,0);
+  const oa=off(ga),ob=off(gb),n=gs[ga];
+  while(c.students.length<Math.max(oa,ob)+n)c.students.push({n:'',ph:'',notes:[]});
+  for(let k=0;k<n;k++){
+    const t=c.students[oa+k];c.students[oa+k]=c.students[ob+k];c.students[ob+k]=t;
+  }
+  grpSel=null;
+  try{await set(K.cls,classes)}catch(e){}
+  renderSeat();toast('모둠을 바꿨습니다');
+}
 async function swapStudents(a,b){
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=Math.max(a,b))c.students.push({n:'',ph:'',notes:[]});
