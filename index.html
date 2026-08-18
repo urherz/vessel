@@ -461,6 +461,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 .filters{display:flex;gap:8px;margin:0 -18px 16px;padding:0 18px 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
 .filters .chip{flex:none}
+#clsTabs{flex-wrap:wrap;overflow-x:visible}
 
 /* 리듬 */
 .week{border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#FBFAF6}
@@ -2372,9 +2373,10 @@ function renderGrp(){
 }
 function grpW(g){return g<=3?g:Math.ceil(g/2)}
 function applyGroups(na,sa,nb,sb){
-  const w=Math.max(grpW(sa),grpW(sb));
   const cols=+$('#clsCols').value||6;
-  const perRow=Math.max(1,Math.floor((cols+1)/(w+1)));
+  const R=+$('#clsRows').value||5;
+  const gw=g=>g<=3?g:Math.ceil(g/2);
+  const gh=g=>g<=3?1:2;
 
   const small=Math.min(sa,sb),big=Math.max(sa,sb);
   const nSmall=(small===sa)?na:nb, nBig=(big===sa)?na:nb;
@@ -2382,65 +2384,80 @@ function applyGroups(na,sa,nb,sb){
   for(let i=0;i<nSmall;i++)groups.push(small);
   for(let i=0;i<nBig;i++)groups.push(big);
 
-  const rows=[];
-  for(let i=0;i<groups.length;i+=perRow)rows.push(groups.slice(i,i+perRow));
+  /* 실제 폭으로 줄에 눌러 담기 */
+  const bands=[];
+  let cur=[],x=0;
+  groups.forEach(g=>{
+    const need=(cur.length?1:0)+gw(g);
+    if(x+need>cols&&cur.length){bands.push(cur);cur=[];x=0}
+    if(gw(g)>cols)return; /* 칸보다 넓은 모둠은 불가 */
+    cur.push(g);x+=(cur.length>1?1:0)+gw(g);
+  });
+  if(cur.length)bands.push(cur);
 
-  const needR=rows.length*3-1;
-  const R=+$('#clsRows').value||5;
+  const needR=bands.reduce((a,b)=>a+Math.max(...b.map(gh)),0)+(bands.length-1);
   if(needR>R){
-    toast(`이 조합은 ${needR}줄이 필요합니다. 줄 수를 늘리거나 다른 조합을 골라주세요.`);
+    toast(`이 조합은 ${needR}줄이 필요합니다. (지금 ${R}줄)`);
     return;
   }
+
   shape=Array(cols*R).fill(false);dirs=Array(cols*R).fill(0);
 
-  rows.forEach((row,ri)=>{
-    const top=(R-(rows.length*3-1))+(rows.length-1-ri)*3;
-    row.forEach((g,gi)=>{
-      const c0=gi*(w+1);
+  /* 아래(교탁 쪽)부터 배치 */
+  let bottom=R-1;
+  bands.forEach(band=>{
+    const bh=Math.max(...band.map(gh));
+    const top=bottom-bh+1;
+    let c0=0;
+    band.forEach(g=>{
+      const w=gw(g);
       if(g<=3){
-        for(let k=0;k<g;k++){
-          const rr=top+1,cc=c0+k;
-          if(rr<R&&cc<cols){shape[rr*cols+cc]=true;dirs[rr*cols+cc]=0}
+        const rr=bottom; /* 한 줄 모둠은 밴드 아래줄 */
+        for(let k=0;k<w;k++){
+          shape[rr*cols+c0+k]=true;dirs[rr*cols+c0+k]=0;
         }
-        return;
-      }
-      const half=Math.ceil(g/2);
-      for(let k=0;k<g;k++){
-        const front=k<half;
-        const rr=top+(front?1:0);
-        const cc=c0+(front?k:k-half);
-        if(rr<R&&cc<cols){
+      }else{
+        const half=Math.ceil(g/2);
+        for(let k=0;k<g;k++){
+          const front=k<half;
+          const rr=front?bottom:top;
+          const cc=c0+(front?k:k-half);
           const idx=rr*cols+cc;
           shape[idx]=true;
-          dirs[idx]=front?2:0;
+          dirs[idx]=front?1:0; /* 앞줄 마주보기, 뒷줄 교탁보기 */
         }
       }
+      c0+=w+1;
     });
+    bottom=top-2; /* 통로 한 줄 */
   });
-  renderShape();
-  toast(`${sa}인 ${na}개 · ${sb}인 ${nb}개, 한 줄에 ${perRow}모둠`);
+  renderShape();updCnt();
 }
 function openCls(c){
-  editCls=c?c.id:null;shapeMode='on';
+  editCls=c?c.id:null;
+  $('#seatBrowse').hidden=true;
+  const det=$('#seatDetail');if(det)det.hidden=true;
+  $('#seatSetup').hidden=false;
+  window.scrollTo(0,0);
   $('#setupTitle').textContent=c?'반 수정':'새 반';
   $('#clsName').value=c?c.name:'';
-  $('#clsCols').value=c?c.cols:6;
-  $('#clsRows').value=c?c.rows:5;
+  const cols=(c&&c.cols)||6,rows=(c&&c.rows)||5;
+  $('#clsCols').value=cols;$('#clsRows').value=rows;
   $('#clsGoal').value=(c&&c.goal)||3;
-  $('#clsGnames').value=(c&&c.gnames?c.gnames.join(', '):'');
-  shape=c?[...c.seats]:Array(30).fill(true);
-  dirs=c&&c.dirs?[...c.dirs]:Array(shape.length).fill(0);
+  $('#clsGnames').value=(c&&c.gnames)?c.gnames.join(', '):'';
   $('#clsNames').value=c?c.students.map(s=>s.leader?'('+s.n+')':s.n).join('\n'):'';
+  shape=c?[...c.seats]:Array(cols*rows).fill(false);
+  dirs=(c&&c.dirs)?[...c.dirs]:Array(shape.length).fill(0);
+  while(dirs.length<shape.length)dirs.push(0);
   $('#clsDel').hidden=!c;$('#clsDelSp').hidden=!!c;
-  $('#shapeMode').innerHTML=[['자리 켜고 끄기','on'],['앉는 방향','dir']]
-    .map(([l,k])=>`<button class="chip" data-m="${k}" aria-pressed="${k==='on'}">${l}</button>`).join('');
+  shapeMode='on';
+  const modes=[['on','자리 켜고 끄기'],['dir','앉는 방향']];
+  $('#shapeMode').innerHTML=modes.map(([k,l])=>`<button class="chip" data-m="${k}" aria-pressed="${k===shapeMode}">${l}</button>`).join('');
   $$('#shapeMode .chip').forEach(b=>b.onclick=()=>{
     shapeMode=b.dataset.m;
     $$('#shapeMode .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));
     renderShape();
   });
-  renderShape();
-  $('#seatBrowse').hidden=true;$('#seatSetup').hidden=false;window.scrollTo(0,0);
   ['clsCols','clsRows'].forEach(id=>$('#'+id).oninput=()=>{resizeShape();renderShape()});
   function gridEdit(mode,side){
     const cols=+$('#clsCols').value||6,R=+$('#clsRows').value||5;
@@ -2450,7 +2467,6 @@ function openCls(c){
     }else{
       if((side==='top'||side==='bot')&&R<=1){toast('마지막 줄입니다');return}
       if((side==='left'||side==='right')&&cols<=1){toast('마지막 칸입니다');return}
-      // 지워질 줄/칸에 자리가 있으면 확인
       let hasSeat=false;
       if(side==='top')hasSeat=shape.slice(0,cols).some(Boolean);
       if(side==='bot')hasSeat=shape.slice((R-1)*cols).some(Boolean);
