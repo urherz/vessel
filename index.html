@@ -258,6 +258,7 @@ button.ghost.on{background:var(--celadon-deep);border-color:var(--celadon-deep);
 .sp b{font-weight:500;font-size:11px;line-height:1.35;letter-spacing:-.02em;display:block}
 .sp .tc{color:var(--ink-faint)}
 .sp .fc{color:#F4F5F1}
+.sp.msel{border-color:var(--seal);box-shadow:inset 0 0 0 2px var(--seal)}
 .sp .jc{color:#F4F5F1}
 .sp:has(.jc){background:var(--seal);border-color:var(--seal)}
 .sp:has(.fc){background:var(--celadon-deep);border-color:var(--celadon-deep)}
@@ -1626,7 +1627,6 @@ function renderSeat(){
         <button class="ghost" id="flipBtn">학생 시점</button>
         <button class="ghost" id="lotBtn">자리 뽑기</button>
         <button class="ghost" id="swapBtn">자리 바꾸기</button>
-        <button class="ghost" id="gswapBtn">모둠 바꾸기</button>
         <button class="ghost" id="clsCopy2">반 복사</button>
         <button class="ghost" id="clsEdit">반 수정</button>
       </span>
@@ -1758,20 +1758,8 @@ function renderSeat(){
       <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
-  if(grpSwapMode&&grpSel!==null){
-    $$('#seatGrid .st[data-i]').forEach(b=>{
-      if(groupOf(ordO.gsizes,+b.dataset.i)===grpSel)b.classList.add('selsw');
-    });
-  }
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>{
     const idx=+b.dataset.i;
-    if(grpSwapMode){
-      const g=groupOf(ordO.gsizes,idx);
-      if(g<0)return;
-      if(grpSel===null){grpSel=g;renderSeat();return}
-      if(grpSel===g){grpSel=null;renderSeat();return}
-      swapGroups(grpSel,g);return;
-    }
     if(swapMode){
       if(swapFirst===null){swapFirst=idx;b.classList.add('selsw');return}
       if(swapFirst===idx){swapFirst=null;b.classList.remove('selsw');return}
@@ -1806,18 +1794,8 @@ function renderSeat(){
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
     renderSeat();toast('뽑았습니다. 다시 뽑으려면 한 번 더.');
   };
-  $('#gswapBtn').onclick=()=>{
-    grpSwapMode=!grpSwapMode;grpSel=null;
-    if(grpSwapMode){swapMode=false;swapFirst=null;$('#swapBtn').classList.remove('on');$('#swapBtn').textContent='자리 바꾸기'}
-    $('#gswapBtn').classList.toggle('on',grpSwapMode);
-    $('#gswapBtn').textContent=grpSwapMode?'바꾸기 끝':'모둠 바꾸기';
-    if(grpSwapMode)toast('바꿀 두 모둠을 차례로 누르세요');
-    renderSeat();
-  };
-  if(grpSwapMode){$('#gswapBtn').classList.add('on');$('#gswapBtn').textContent='바꾸기 끝'}
   $('#swapBtn').onclick=()=>{
     swapMode=!swapMode;swapFirst=null;
-    if(swapMode){grpSwapMode=false;grpSel=null;$('#gswapBtn').classList.remove('on');$('#gswapBtn').textContent='모둠 바꾸기'}
     $('#swapBtn').classList.toggle('on',swapMode);
     $('#swapBtn').textContent=swapMode?'바꾸기 끝':'자리 바꾸기';
     if(swapMode)toast('바꿀 두 자리를 차례로 누르세요');
@@ -2377,6 +2355,7 @@ async function importAll(file){
 }
 const ARROW=['↓','←','↑','→'];
 let shapeMode='on';
+let mvSel=null;
 /* 모둠 나누기 */
 function grpCombos(n,a,b){
   const out=[];
@@ -2482,7 +2461,8 @@ function openCls(c){
   while(dirs.length<shape.length)dirs.push(0);
   $('#clsDel').hidden=!c;$('#clsDelSp').hidden=!!c;
   shapeMode='on';
-  const modes=[['on','자리 켜고 끄기'],['dir','앉는 방향']];
+  const modes=[['on','자리 켜고 끄기'],['dir','앉는 방향'],['mv','모둠 바꾸기']];
+  mvSel=null;
   $('#shapeMode').innerHTML=modes.map(([k,l])=>`<button class="chip" data-m="${k}" aria-pressed="${k===shapeMode}">${l}</button>`).join('');
   $$('#shapeMode .chip').forEach(b=>b.onclick=()=>{
     shapeMode=b.dataset.m;
@@ -2530,6 +2510,7 @@ function openCls(c){
     shape=ns;dirs=nd;
     renderShape();updCnt();
   }
+  renderShape();updCnt();
   $('#addTop').onclick=()=>gridEdit('add','top');
   $('#addBot').onclick=()=>gridEdit('add','bot');
   $('#addL').onclick=()=>gridEdit('add','left');
@@ -2582,6 +2563,53 @@ function updCnt(){
     ? `자리 <b>${seats}</b>개 · 이름 <b>${names}</b>명 — 자리가 ${names-seats}개 모자랍니다.`
     : `자리 <b>${seats}</b>개 · 이름 <b>${names}</b>명`;
 }
+function compAt(start){
+  const cols=+$('#clsCols').value||6;
+  const R=+$('#clsRows').value||5;
+  const set=new Set([start]),q=[start];
+  let minR=99,minC=99,maxR=-1,maxC=-1;
+  while(q.length){
+    const j=q.pop();
+    const jr=Math.floor(j/cols),jc=j%cols;
+    if(jr<minR)minR=jr;if(jr>maxR)maxR=jr;
+    if(jc<minC)minC=jc;if(jc>maxC)maxC=jc;
+    [[jr-1,jc],[jr+1,jc],[jr,jc-1],[jr,jc+1]].forEach(([r2,c2])=>{
+      if(r2<0||c2<0||r2>=R||c2>=cols)return;
+      const k=r2*cols+c2;
+      if(shape[k]&&!set.has(k)){set.add(k);q.push(k)}
+    });
+  }
+  return {set,minR,minC,maxR,maxC};
+}
+function swapComps(a,b){
+  const cols=+$('#clsCols').value||6;
+  const aw=a.maxC-a.minC,ah=a.maxR-a.minR;
+  const bw=b.maxC-b.minC,bh=b.maxR-b.minR;
+  if(aw!==bw||ah!==bh){
+    toast('모양 크기가 다른 모둠입니다. 같은 크기끼리 바꿀 수 있습니다.');
+    mvSel=null;renderShape();return;
+  }
+  const read=(cp)=>{
+    const out=[];
+    for(let r=0;r<=ah;r++)for(let c=0;c<=aw;c++){
+      const i=(cp.minR+r)*cols+(cp.minC+c);
+      out.push({on:shape[i],d:dirs[i]});
+    }
+    return out;
+  };
+  const A=read(a),B=read(b);
+  const write=(cp,data)=>{
+    let k=0;
+    for(let r=0;r<=ah;r++)for(let c=0;c<=aw;c++){
+      const i=(cp.minR+r)*cols+(cp.minC+c);
+      shape[i]=data[k].on;dirs[i]=data[k].d;k++;
+    }
+  };
+  write(a,B);write(b,A);
+  mvSel=null;
+  renderShape();updCnt();
+  toast('모둠 자리를 바꿨습니다');
+}
 function resizeShape(){
   const n=(+$('#clsCols').value||6)*(+$('#clsRows').value||5);
   const oldS=[...shape],oldD=[...dirs];
@@ -2593,12 +2621,21 @@ function renderShape(){
   if(shape.length!==cols*(+$('#clsRows').value||5))resizeShape();
   $('#shapeHelp').textContent=shapeMode==='on'
     ? '칸을 눌러 자리를 끄고 켭니다. 빈 곳은 통로가 됩니다.'
-    : '누를 때마다 교탁보기 → 혼자 교탁 → 마주보기 순서로 바뀝니다. 혼자 교탁은 오른쪽 책상과 하나로 합쳐집니다.';
+    : shapeMode==='dir'
+    ? '누를 때마다 교탁보기 → 혼자 교탁 → 마주보기 순서로 바뀝니다. 혼자 교탁은 오른쪽 책상과 하나로 합쳐집니다.'
+    : '바꿀 두 모둠을 차례로 누르세요. 같은 크기의 모둠끼리 자리가 서로 바뀝니다.';
   $('#shapeGrid').innerHTML=`<div class="seats" style="grid-template-columns:repeat(${cols},1fr);gap:${cols>6?4:6}px">
-    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'}" data-i="${i}">${on?(shapeMode==='dir'?(dirs[i]===1?'<b class="fc">마주<br>보기</b>':dirs[i]===2?'<b class="jc">혼자<br>교탁</b>':'<b class="tc">교탁<br>보기</b>'):''):'·'}</button>`).join('')}</div>
+    ${shape.map((on,i)=>`<button class="sp ${on?'':'off'} ${mvSel&&mvSel.set.has(i)?'msel':''}" data-i="${i}">${on?(shapeMode==='dir'?(dirs[i]===1?'<b class="fc">마주<br>보기</b>':dirs[i]===2?'<b class="jc">혼자<br>교탁</b>':'<b class="tc">교탁<br>보기</b>'):''):'·'}</button>`).join('')}</div>
     <div class="board">교탁</div>`;
   $$('#shapeGrid .sp').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.i;
+    if(shapeMode==='mv'){
+      if(!shape[i])return;
+      const comp=compAt(i);
+      if(!mvSel){mvSel=comp;renderShape();return}
+      if(mvSel.set.has(i)){mvSel=null;renderShape();return}
+      swapComps(mvSel,comp);return;
+    }
     if(shapeMode==='dir'){
       if(!shape[i])return;
       dirs[i]=dirs[i]===0?2:(dirs[i]===2?1:0);
@@ -2702,21 +2739,6 @@ async function delCls(){
 }
 
 /* 학생 상세 */
-async function swapGroups(ga,gb){
-  const c=classes.find(x=>x.id===curCls);
-  const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
-  const gs=ord.gsizes;
-  if(gs[ga]!==gs[gb]){toast(`인원이 다릅니다 (${gs[ga]}명 · ${gs[gb]}명). 같은 인원 모둠끼리 바꿀 수 있습니다.`);grpSel=null;renderSeat();return}
-  const off=g=>gs.slice(0,g).reduce((a,b)=>a+b,0);
-  const oa=off(ga),ob=off(gb),n=gs[ga];
-  while(c.students.length<Math.max(oa,ob)+n)c.students.push({n:'',ph:'',notes:[]});
-  for(let k=0;k<n;k++){
-    const t=c.students[oa+k];c.students[oa+k]=c.students[ob+k];c.students[ob+k]=t;
-  }
-  grpSel=null;
-  try{await set(K.cls,classes)}catch(e){}
-  renderSeat();toast('모둠을 바꿨습니다');
-}
 async function swapStudents(a,b){
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=Math.max(a,b))c.students.push({n:'',ph:'',notes:[]});
