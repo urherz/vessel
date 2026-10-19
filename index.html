@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
 <title>Vessel</title>
+<meta name="apple-mobile-web-app-title" content="Vessel">
+<meta name="application-name" content="Vessel">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
@@ -70,7 +72,7 @@ nav{
   background:rgba(242,241,235,.96);backdrop-filter:saturate(1.4) blur(8px);
   border-top:1px solid var(--rule);padding-bottom:var(--safe);
 }
-nav .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr)}
 nav button{
   background:none;border:0;height:var(--nav);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
@@ -227,6 +229,11 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fl .chair{right:-19px;top:50%;transform:translateY(-50%)}
 .st .chair.ldr{background:var(--seal);opacity:1}
 .st.done .chair{box-shadow:0 0 0 4px #E9C46A;opacity:1}
+.st.gdone .stimg{background:#C7DAEA;border-color:#5B87A8}
+.st.gdone .stimg::after{
+  content:"";position:absolute;inset:0;background:rgba(91,135,168,.45);
+  border-radius:2px;pointer-events:none;
+}
 .seats.flip .st.wide .chair{top:auto;bottom:-19px}
 .seats.flip .st.wide:not(.nu) .nmx{padding-top:21px}
 .seats.flip .st.talld{flex-direction:column-reverse;justify-content:flex-start}
@@ -390,6 +397,17 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
   flex:none;width:24px;padding-top:4px;
 }
 .rl>p{margin:0;font-size:15.5px;color:var(--ink-soft);line-height:1.62;text-wrap:pretty}
+.pcard{border:1px solid var(--rule);border-radius:3px;background:#FBFAF6;margin-bottom:10px}
+.phd{display:block;width:100%;text-align:left;background:none;border:0;padding:15px 16px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.phd .pt{display:block;font-family:var(--serif);font-size:17.5px;font-weight:600}
+.phd .ps{display:block;font-size:14.5px;color:var(--ink-soft);margin-top:4px;line-height:1.6}
+.phd .pm{display:block;font-size:12.5px;color:var(--celadon-deep);margin-top:6px}
+.pbd{padding:0 16px 14px;border-top:1px solid var(--rule)}
+.pbody{font-size:15.5px;line-height:1.8;color:var(--ink);padding-top:14px;text-wrap:pretty}
+.pnone{font-size:14.5px;color:var(--ink-faint);padding-top:14px;margin:0}
+.plink{display:block;width:100%;text-align:left;background:none;border:0;border-left:3px solid var(--celadon-deep);padding:8px 12px;margin-top:6px;font-size:15px;color:var(--ink);cursor:pointer;font-family:inherit}
+.pgo{display:block;margin-top:8px;font-size:13.5px;color:var(--celadon-deep)}
+.tcard.flash{box-shadow:0 0 0 3px var(--celadon-deep);transition:box-shadow .3s}
 .rl2{margin:0 0 6px;font-size:15.5px;color:var(--ink-soft);line-height:1.62;text-wrap:pretty}
 .rq{
   margin:10px 0 0;font-size:16.5px;font-weight:500;color:var(--seal);
@@ -599,6 +617,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 
 <main class="wrap">
 
+
   <section id="p-att" class="panel" hidden>
     <h2 class="sec">출결</h2>
     <p class="lede">받은 메시지를 붙여넣으면 날짜와 유형을 알아서 읽습니다.</p>
@@ -639,7 +658,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
     </div>
   </section>
 
-  <section id="p-today" class="panel">
+  <section id="p-today" class="panel" hidden>
     <p class="bkalert" id="bkAlert" hidden></p>
     <h2 class="sec">퇴근했습니다. 지금 어느 칸인가요</h2>
     <p class="lede">높은 칸이 잘한 게 아닙니다. 칸마다 오늘 나에게 허용할 것이 다를 뿐입니다.</p>
@@ -711,6 +730,32 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
     
   </section>
 
+  <section id="p-psy" class="panel" hidden>
+    <div id="psyBrowse">
+      <h2 class="sec">행동 뒤의 이유</h2>
+      <p class="lede">같은 행동도 이유가 다르면 대응이 달라집니다.</p>
+      <div id="psyList"></div>
+      <button class="act" id="psyNew" style="margin-top:18px">이유 추가</button>
+    </div>
+    <div id="psyEdit" hidden>
+      <div class="ed-head">
+        <button class="backarrow" id="psyBack" aria-label="뒤로">←</button>
+        <span id="psyTitle">이유</span>
+        <button class="pr" id="psySave">저장</button>
+      </div>
+      <label class="f" for="pT">이름</label>
+      <input id="pT" placeholder="예: 과제를 피하려 함">
+      <div class="mt"><label class="f" for="pS">한 줄 요약</label>
+        <input id="pS" placeholder="이 행동으로 무엇을 얻으려 하는가"></div>
+      <div class="mt"><label class="f" for="pB">심리 분석</label>
+        <textarea id="pB" rows="10" placeholder="왜 이런 행동이 나오는지, 무엇이 통하고 무엇이 역효과인지"></textarea></div>
+      <div class="mt"><button class="act" id="psySave2">저장</button></div>
+      <div class="mt" id="psyDelWrap" hidden style="text-align:center;border-top:1px solid var(--rule);padding-top:6px">
+        <button class="lnk" id="psyDel">이 이유 지우기</button>
+      </div>
+    </div>
+  </section>
+
   <section id="p-cards" class="panel" hidden>
     <div id="cardsBrowse">
       <h2 class="sec">이 순간에는 이렇게</h2>
@@ -737,8 +782,8 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
       </div>
       <label class="f" for="eCat">상황 분류</label>
       <select id="eCat"></select>
-      <div class="mt"><label class="f" for="eIf">이런 상황이면</label>
-        <input id="eIf" placeholder="예: 뒷자리에서 자거나 놀고 있을 때"></div>
+      <div class="mt"><label class="f" for="eIf">학생이 이럴 때</label>
+        <input id="eIf" placeholder="예: 수업 중 계속 엎드려 있을 때"></div>
       <div class="mt">
         <label class="f">기본 대응</label>
         <input id="eFace" placeholder="표정 — 어떤 얼굴로">
@@ -746,10 +791,10 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
         <textarea id="eSay" rows="2" class="mt" placeholder="멘트 — 실제로 입에서 나올 말"></textarea>
       </div>
       <div class="mt">
-        <label class="f">유형별로 다르게</label>
-        <p style="font-size:16px;color:var(--ink-faint);margin:-2px 0 10px;line-height:1.65">같은 상황이라도 학생과 맥락에 따라 달라지는 경우만 적으면 됩니다.</p>
+        <label class="f">이유별로 다르게</label>
+        <p style="font-size:16px;color:var(--ink-faint);margin:-2px 0 10px;line-height:1.65">같은 행동이라도 이유에 따라 대응이 달라지는 경우만 적으면 됩니다.</p>
         <div id="eVars"></div>
-        <button class="addvar" id="addVar">＋ 유형 추가</button>
+        <button class="addvar" id="addVar">＋ 이유 추가</button>
       </div>
       <div class="mt"><button class="act" id="saveEdit2">저장</button></div>
       <div class="mt" id="delWrap" hidden style="text-align:center;border-top:1px solid var(--rule);padding-top:6px">
@@ -758,7 +803,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
     </div>
   </section>
 
-  <section id="p-seat" class="panel" hidden>
+  <section id="p-seat" class="panel">
     <div id="seatBrowse">
       <h2 class="sec">좌석표</h2>
       <div class="filters" id="clsTabs"></div>
@@ -934,11 +979,12 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 <nav>
   <div class="inner" role="tablist">
     <button role="tab" data-tab="att" aria-selected="false">출결<i></i></button>
-    <button role="tab" data-tab="today" aria-selected="true">오늘<i></i></button>
+    <button role="tab" data-tab="today" aria-selected="false">오늘<i></i></button>
     <button role="tab" data-tab="rhythm" aria-selected="false">리듬<i></i></button>
+    <button role="tab" data-tab="psy" aria-selected="false">심리<i></i></button>
     <button role="tab" data-tab="cards" aria-selected="false">대응<i></i></button>
     <button role="tab" data-tab="log" aria-selected="false">일지<i></i></button>
-    <button role="tab" data-tab="seat" aria-selected="false">좌석<i></i></button>
+    <button role="tab" data-tab="seat" aria-selected="true">좌석<i></i></button>
   </div>
 </nav>
 
@@ -1116,7 +1162,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1227,16 +1273,17 @@ async function boot(){
   term=await get(K.term,null); if(!term){term={start:'2026-03-02',end:'2027-02-04',perWeek:3};try{await set(K.term,term)}catch(e){}}
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
   if(ghTok&&gistId)await syncPull(true);
-  buildToday();buildCards();await buildLog();await buildSeat();await buildAtt();await buildSync();buildRhythm();buildTerm();renderBkInfo();
+  buildToday();await buildPsy();buildCards();await buildLog();await buildSeat();await buildAtt();await buildSync();buildRhythm();buildTerm();renderBkInfo();
 }
 
 $$('nav button').forEach(b=>b.onclick=()=>{
   if(!$('#cardsEdit').hidden){$('#cardsEdit').hidden=true;$('#cardsBrowse').hidden=false;editing=null}
+  if(!$('#psyEdit').hidden){$('#psyEdit').hidden=true;$('#psyBrowse').hidden=false;psyEditing=null}
   if($('#seatSetup')&&(!$('#seatSetup').hidden||!$('#seatDetail').hidden)){
     $('#seatSetup').hidden=true;$('#seatDetail').hidden=true;$('#seatBrowse').hidden=false;
   }
   $$('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-  ['att','today','rhythm','cards','log','seat'].forEach(t=>$('#p-'+t).hidden=(t!==b.dataset.tab));
+  ['att','today','rhythm','psy','cards','log','seat'].forEach(t=>$('#p-'+t).hidden=(t!==b.dataset.tab));
   window.scrollTo(0,0);
 });
 
@@ -1438,12 +1485,12 @@ function renderCards(){
   $$('#filters .chip').forEach(b=>b.onclick=()=>{filter=b.dataset.f;renderCards()});
   const list=cards.filter(c=>filter==='전체'||c.c===filter);
   $('#cardList').innerHTML=list.length?list.map(c=>`
-    <div class="tcard">
+    <div class="tcard" data-cid="${c.id}">
       <div class="cat">${c.c}</div>
       <p class="if">${esc(c.i)}</p>
       ${resp(c.r)}
       ${(c.v&&c.v.length)?`<div class="vwrap">
-        <span class="vlab">유형별</span>
+        <span class="vlab">이유별</span>
         <div class="vpills">${c.v.map((v,n)=>`<button class="vp" data-id="${c.id}" data-i="${n}" aria-pressed="false">${esc(v.l)}</button>`).join('')}</div>
         <div class="vout" hidden></div>
       </div>`:''}
@@ -1460,7 +1507,11 @@ function renderCards(){
     wrap.querySelectorAll('.vp').forEach(x=>x.setAttribute('aria-pressed','false'));
     if(on){out.hidden=true;out.innerHTML='';return}
     b.setAttribute('aria-pressed','true');
-    out.innerHTML=resp(card.v[+b.dataset.i].r);out.hidden=false;
+    const vv=card.v[+b.dataset.i];
+    const ps=vv.p&&psy.find(x=>x.id===vv.p);
+    out.innerHTML=resp(vv.r)+(ps?`<button class="lnk pgo" data-p="${ps.id}">왜 이게 통하나 · ${esc(ps.t)} →</button>`:'');
+    out.hidden=false;
+    const g=out.querySelector('.pgo');if(g)g.onclick=()=>gotoPsy(g.dataset.p);
   });
   $$('#cardList .edit').forEach(b=>b.onclick=()=>openEditor(cards.find(c=>c.id===b.dataset.id)));
   $$('#cardList .del').forEach(b=>b.onclick=async()=>{
@@ -1503,13 +1554,21 @@ function closeEditor(){
 function varRow(v){
   const r=(v&&v.r)||{f:'',a:'',s:''};
   return `<div class="vrow">
-  <input class="vl-in" placeholder="유형 (예: 반복될 때)" value="${esc(v&&v.l)}">
+  <select class="vp-in"><option value="">심리 탭과 연결 안 함</option>${psy.map(x=>`<option value="${x.id}" ${v&&v.p===x.id?'selected':''}>${esc(x.t)}</option>`).join('')}</select>
+  <input class="vl-in mt" placeholder="이름 (예: 피곤해서)" value="${esc(v&&v.l)}">
   <input class="vf-in" placeholder="표정" value="${esc(r.f)}">
   <textarea class="va-in" rows="2" placeholder="행동">${esc(r.a)}</textarea>
   <textarea class="vs-in" rows="2" placeholder="멘트">${esc(r.s)}</textarea>
-  <button class="vdel">이 유형 삭제</button></div>`;
+  <button class="vdel">이 이유 삭제</button></div>`;
 }
-function bindVars(){$$('#eVars .vdel').forEach(b=>b.onclick=()=>b.parentElement.remove())}
+function bindVars(){
+  $$('#eVars .vdel').forEach(b=>b.onclick=()=>b.parentElement.remove());
+  $$('#eVars .vp-in').forEach(sel=>sel.onchange=()=>{
+    const inp=sel.parentElement.querySelector('.vl-in');
+    const hit=psy.find(x=>x.id===sel.value);
+    if(hit&&!inp.value.trim())inp.value=hit.t;
+  });
+}
 async function saveEditor(){
   const i=$('#eIf').value.trim();
   const r={f:$('#eFace').value.trim(),a:$('#eAct').value.trim(),s:$('#eSay').value.trim()};
@@ -1517,6 +1576,7 @@ async function saveEditor(){
   if(!r.f&&!r.a&&!r.s){toast('표정·행동·멘트 중 하나는 채워주세요');return}
   const v=$$('#eVars .vrow').map(x=>({
     l:x.querySelector('.vl-in').value.trim(),
+    p:x.querySelector('.vp-in').value,
     r:{f:x.querySelector('.vf-in').value.trim(),a:x.querySelector('.va-in').value.trim(),s:x.querySelector('.vs-in').value.trim()}
   })).filter(x=>x.l&&(x.r.f||x.r.a||x.r.s));
   const data={c:$('#eCat').value,i,r,v};
@@ -1525,6 +1585,88 @@ async function saveEditor(){
   else{cards=[{id:'c'+Date.now(),...data},...cards]}
   await set(K.cards,cards);closeEditor();renderCards();
   toast(was?'수정했습니다':'카드를 담았습니다');
+}
+
+/* ── 심리: 행동 뒤의 이유 ── */
+const PSY_SEED=[
+  {t:'관심·인정을 원함',s:'봐 달라는 신호. 꾸중도 관심으로 받아들일 수 있다.'},
+  {t:'과제·상황을 피하려 함',s:'하기 싫거나 못할 것 같은 일에서 빠져나가려 한다.'},
+  {t:'통제권을 되찾으려 함',s:'시키는 대로만 하지 않겠다는 힘겨루기.'},
+  {t:'또래 안에서 자리를 지키려 함',s:'친구들 앞에서의 체면과 소속이 걸려 있다.'},
+  {t:'해도 안 된다고 느낌',s:'반복된 실패로 시도 자체를 멈춘 상태.'}
+];
+let psy=[],psyEditing=null,psyOpen=null;
+async function buildPsy(){
+  psy=await get(K.psy,null);
+  if(!psy){
+    psy=PSY_SEED.map((x,n)=>({id:'p'+(Date.now()+n),t:x.t,s:x.s,b:''}));
+    try{await set(K.psy,psy)}catch(e){}
+  }
+  $('#psyNew').onclick=()=>openPsy(null);
+  $('#psyBack').onclick=closePsy;
+  $('#psySave').onclick=savePsy;$('#psySave2').onclick=savePsy;
+  $('#psyDel').onclick=async()=>{
+    const b=$('#psyDel');
+    if(!b.dataset.armed){b.dataset.armed='1';b.textContent='정말 지울까요? 카드 연결도 풀립니다';return}
+    psy=psy.filter(x=>x.id!==psyEditing);
+    cards=cards.map(c=>({...c,v:(c.v||[]).map(v=>v.p===psyEditing?{...v,p:''}:v)}));
+    try{await set(K.psy,psy);await set(K.cards,cards)}catch(e){}
+    closePsy();renderCards();toast('지웠습니다');
+  };
+  renderPsy();
+}
+function psyCards(id){
+  return cards.filter(c=>(c.v||[]).some(v=>v.p===id));
+}
+function renderPsy(){
+  if(!psy.length){$('#psyList').innerHTML='<div class="empty">아직 정리한 이유가 없습니다.</div>';return}
+  $('#psyList').innerHTML=psy.map(x=>{
+    const linked=psyCards(x.id);
+    const open=psyOpen===x.id;
+    return `<div class="pcard ${open?'open':''}" id="psy-${x.id}">
+      <button class="phd" data-o="${x.id}">
+        <span class="pt">${esc(x.t)}</span>
+        ${x.s?`<span class="ps">${esc(x.s)}</span>`:''}
+        <span class="pm">${linked.length?'카드 '+linked.length+'장':''}</span>
+      </button>
+      ${open?`<div class="pbd">
+        ${x.b?`<div class="pbody">${esc(x.b).replace(/\n/g,'<br>')}</div>`:'<p class="pnone">아직 분석을 적지 않았습니다.</p>'}
+        ${linked.length?`<p class="eyebrow" style="margin-top:16px">이 이유로 연결된 카드</p>
+          ${linked.map(c=>`<button class="plink" data-c="${c.id}">${esc(c.i)}</button>`).join('')}`:''}
+        <div style="text-align:right;margin-top:10px"><button class="lnk" data-e="${x.id}">수정</button></div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  $$('#psyList [data-o]').forEach(b=>b.onclick=()=>{psyOpen=psyOpen===b.dataset.o?null:b.dataset.o;renderPsy()});
+  $$('#psyList [data-e]').forEach(b=>b.onclick=()=>openPsy(psy.find(x=>x.id===b.dataset.e)));
+  $$('#psyList [data-c]').forEach(b=>b.onclick=()=>gotoCard(b.dataset.c));
+}
+function openPsy(x){
+  psyEditing=x?x.id:null;
+  $('#psyTitle').textContent=x?'이유 수정':'새 이유';
+  $('#pT').value=x?x.t:'';$('#pS').value=x?(x.s||''):'';$('#pB').value=x?(x.b||''):'';
+  const d=$('#psyDel');delete d.dataset.armed;d.textContent='이 이유 지우기';
+  $('#psyDelWrap').hidden=!x;
+  $('#psyBrowse').hidden=true;$('#psyEdit').hidden=false;window.scrollTo(0,0);
+}
+function closePsy(){$('#psyEdit').hidden=true;$('#psyBrowse').hidden=false;psyEditing=null;renderPsy();window.scrollTo(0,0)}
+async function savePsy(){
+  const t=$('#pT').value.trim();
+  if(!t){toast('이름은 적어야 합니다');return}
+  const data={t,s:$('#pS').value.trim(),b:$('#pB').value.trim()};
+  if(psyEditing)psy=psy.map(x=>x.id===psyEditing?{...x,...data}:x);
+  else{const id='p'+Date.now();psy=[...psy,{id,...data}];psyOpen=id}
+  try{await set(K.psy,psy)}catch(e){toast('저장하지 못했습니다');return}
+  closePsy();renderCards();toast('저장했습니다');
+}
+function gotoTab(t){const b=[...document.querySelectorAll('nav button')].find(x=>x.dataset.tab===t);if(b)b.click()}
+function gotoPsy(id){
+  psyOpen=id;gotoTab('psy');renderPsy();
+  setTimeout(()=>{const el=$('#psy-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},60);
+}
+function gotoCard(id){
+  filter='전체';gotoTab('cards');renderCards();
+  setTimeout(()=>{const el=document.querySelector('#cardList [data-cid="'+id+'"]');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1400)}},60);
 }
 
 /* ── 좌석표 ── */
@@ -1586,7 +1728,7 @@ async function paintPhotos(root){
     if(d)el.src=d; else el.style.display='none';
   }
 }
-let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,grpSwapMode=false,grpSel=null,viewFlip=false;
+let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,actMode=false,viewFlip=false;
 
 async function buildSeat(){
   classes=await get(K.cls,[]);
@@ -1625,6 +1767,7 @@ function renderSeat(){
         <button class="ghost" id="clsMvL" title="탭 앞으로">◀</button>
         <button class="ghost" id="clsMvR" title="탭 뒤로">▶</button>
         <button class="ghost" id="flipBtn">학생 시점</button>
+        <button class="ghost" id="actBtn">활동 체크</button>
         <button class="ghost" id="lotBtn">자리 뽑기</button>
         <button class="ghost" id="swapBtn">자리 바꾸기</button>
         <button class="ghost" id="clsCopy2">반 복사</button>
@@ -1748,7 +1891,9 @@ function renderSeat(){
     const joinR=wide&&(dirsV[i]===2)&&cc<C-1&&seatsV[rr*C+cc+1];
     const joinL=cc>0&&seatsV[rr*C+cc-1]&&(dirsV[rr*C+cc-1]===2);
     if(joinL)return`<div class="st off"></div>`;
-    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'solo':''}" data-i="${idx}">
+    const gIdx=(idx!==undefined)?groupOf(ordO.gsizes,idx):-1;
+    const gdone=gIdx>=0&&c.actDone&&c.actDone[gIdx];
+    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${gdone?'gdone':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'solo':''}" data-i="${idx}">
       <span class="stimg">
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
@@ -1760,6 +1905,14 @@ function renderSeat(){
   paintPhotos(g);
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>{
     const idx=+b.dataset.i;
+    if(actMode){
+      const g=groupOf(ordO.gsizes,idx);
+      if(g<0)return;
+      if(!c.actDone)c.actDone={};
+      c.actDone[g]=!c.actDone[g];
+      set(K.cls,classes).catch(()=>{});
+      renderSeat();return;
+    }
     if(swapMode){
       if(swapFirst===null){swapFirst=idx;b.classList.add('selsw');return}
       if(swapFirst===idx){swapFirst=null;b.classList.remove('selsw');return}
@@ -1794,8 +1947,17 @@ function renderSeat(){
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
     renderSeat();toast('뽑았습니다. 다시 뽑으려면 한 번 더.');
   };
+  $('#actBtn').onclick=()=>{
+    actMode=!actMode;
+    if(actMode){swapMode=false;swapFirst=null;$('#swapBtn').classList.remove('on');$('#swapBtn').textContent='자리 바꾸기'}
+    $('#actBtn').classList.toggle('on',actMode);
+    $('#actBtn').textContent=actMode?'체크 끝':'활동 체크';
+    if(actMode)toast('다 한 모둠을 누르세요. 다시 누르면 풀립니다.');
+  };
+  if(actMode){$('#actBtn').classList.add('on');$('#actBtn').textContent='체크 끝'}
   $('#swapBtn').onclick=()=>{
     swapMode=!swapMode;swapFirst=null;
+    if(swapMode){actMode=false;$('#actBtn').classList.remove('on');$('#actBtn').textContent='활동 체크'}
     $('#swapBtn').classList.toggle('on',swapMode);
     $('#swapBtn').textContent=swapMode?'바꾸기 끝':'자리 바꾸기';
     if(swapMode)toast('바꿀 두 자리를 차례로 누르세요');
@@ -2165,13 +2327,14 @@ async function collectAll(){
     for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
   }
   return {v:1,at:Date.now(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
+    cards:await get(K.cards,[]),psy:await get(K.psy,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
 }
 async function applyAll(d){
   for(const k in (d.imgs||{})){try{await phSet(k,d.imgs[k])}catch(e){}}
   if(d.classes){classes=d.classes;try{await set(K.cls,classes)}catch(e){}}
   if(d.cards){cards=d.cards.map(norm);try{await set(K.cards,cards)}catch(e){}}
+  if(d.psy&&d.psy.length){psy=d.psy;try{await set(K.psy,psy)}catch(e){};renderPsy()}
   if(d.logs){logs=d.logs;try{await set(K.logs,logs)}catch(e){}}
   if(d.wlog){logs2=d.wlog;try{await set(K.log,logs2)}catch(e){}}
   if(d.week){week=d.week;try{await set(K.week,week)}catch(e){}}
@@ -2297,7 +2460,7 @@ async function exportAll(auto){
     for(const n of (st.notes||[]))if(n.ph){const d=await phGet(n.ph);if(d)imgs[n.ph]=d}
   }
   const data={v:1,at:new Date().toISOString(),classes,imgs,
-    cards:await get(K.cards,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
+    cards:await get(K.cards,[]),psy:await get(K.psy,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
     week:await get(K.week,null),term:await get(K.term,null)};
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const d=new Date(),z=n=>String(n).padStart(2,'0');
@@ -2342,6 +2505,7 @@ async function importAll(file){
       for(const k in (d.imgs||{}))await phSet(k,d.imgs[k]);
       classes=d.classes;await set(K.cls,classes);
       if(d.cards){cards=d.cards.map(norm);await set(K.cards,cards)}
+      if(d.psy&&d.psy.length){psy=d.psy;await set(K.psy,psy);renderPsy()}
       if(d.logs){logs=d.logs;await set(K.logs,logs)}
       if(d.wlog){logs2=d.wlog;await set(K.log,logs2)}
       if(d.week){week=d.week;await set(K.week,week)}
