@@ -411,7 +411,7 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 .viewsw{margin-left:auto}
 body.share nav,body.share .synctop,body.share .tonly,
 body.share #seatBrowse>.card,body.share #clsTabs [data-c="__new"]{display:none!important}
-body.share .st .spk,body.share .st .dot{display:none}
+body.share .st .dot{display:none}
 body.share .st.mark .stimg{border-color:var(--rule)}
 body.share .st{cursor:default}
 .qbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}
@@ -825,14 +825,9 @@ body.share .st{cursor:default}
       <div id="seatMain"></div>
       <div class="card" style="margin-top:22px">
         <p class="eyebrow">백업</p>
-        <p style="font-size:16px;color:var(--ink-soft);margin:0 0 12px;line-height:1.7">브라우저 기록을 지우면 저장된 내용도 사라집니다. 가끔 파일로 받아두세요.</p>
+        <p style="font-size:16px;color:var(--ink-soft);margin:0 0 12px;line-height:1.7">기기 동기화가 켜져 있으면 자동으로 저장됩니다. 파일은 필요할 때만 받으세요.</p>
         <button class="ghost" id="expBtn" style="width:100%;min-height:46px">지금 파일로 내려받기</button>
         <p class="bkinfo" id="bkInfo"></p>
-        <label class="tgl" for="autoBk">
-          <span>기록 5번마다 자동으로 받기</span>
-          <input type="checkbox" id="autoBk" checked>
-        </label>
-        <p style="font-size:16px;color:var(--ink-faint);margin:8px 0 0;line-height:1.65">다운로드 폴더에 파일이 쌓입니다. 가끔 오래된 것만 지우세요.</p>
         <div style="border-top:1px solid var(--rule);margin-top:16px;padding-top:14px">
           <p class="eyebrow">기기 동기화</p>
           <p style="font-size:14.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.7" id="syncStat">GitHub 계정으로 여러 기기에서 같은 내용을 봅니다.</p>
@@ -1755,9 +1750,7 @@ async function buildSeat(){
   $('#clsDel').onclick=delCls;
   $('#expBtn').onclick=exportAll;
   $('#impIn').onchange=e=>{const f=e.target.files[0];if(f)importAll(f);e.target.value=''};
-  autoBk=await get(K.auto,true);bkCnt=await get(K.cnt,0);
-  $('#autoBk').checked=autoBk;
-  $('#autoBk').onchange=async e=>{autoBk=e.target.checked;await set(K.auto,autoBk);renderBkInfo()};
+  autoBk=false;bkCnt=0;
   renderBkInfo();
   $('#shapePresets').innerHTML=[['ㅁ자 4인','sq'],['ㅗ자 4인','tt'],['ㅡ자 일렬','ln'],['2인 짝','pr'],['전체 채우기','all']]
     .map(([l,k])=>`<button class="chip" data-g="${k}">${l}</button>`).join('');
@@ -2486,7 +2479,7 @@ async function buildSync(){
 let autoBk=true,bkCnt=0;
 const AUTO_EVERY=5;
 async function bump(){
-  if(!autoBk)return;
+  return;
   bkCnt++;
   await set(K.cnt,bkCnt);
   if(bkCnt>=AUTO_EVERY){
@@ -2520,14 +2513,14 @@ async function renderBkInfo(){
   const d=last?Math.floor((new Date(todayKey())-new Date(last))/864e5):null;
   const el=$('#bkInfo');
   if(el){
-    if(!last){el.className='bkinfo warn';el.textContent='아직 한 번도 받지 않았습니다.'}
+    if(ghTok&&gistId){el.className='bkinfo';el.textContent='동기화로 자동 저장되고 있습니다.'}
+    else if(!last){el.className='bkinfo warn';el.textContent='아직 한 번도 받지 않았습니다.'}
     else{el.className='bkinfo'+(d>=14&&!autoBk?' warn':'');
       el.textContent=d===0?'오늘 받았습니다.':d>=14?`마지막 백업이 ${d}일 전입니다.`:`마지막 백업 ${d}일 전.`}
-    if(autoBk)el.textContent+=` 기록 ${Math.max(0,AUTO_EVERY-bkCnt)}번 뒤 자동 저장.`;
   }
   const al=$('#bkAlert');
   if(al){
-    const need=has&&!autoBk&&(!last||d>=14);
+    const need=has&&!(ghTok&&gistId)&&(!last||d>=14);
     al.hidden=!need;
     if(need)al.innerHTML=last
       ? `백업한 지 ${d}일 됐습니다. <b data-go="seat">좌석 탭에서 받아두기</b>`
