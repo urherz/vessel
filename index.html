@@ -414,6 +414,20 @@ body.share #seatBrowse>.card,body.share #clsTabs [data-c="__new"]{display:none!i
 body.share .st .dot{display:none}
 body.share .st.mark .stimg{border-color:var(--rule)}
 body.share .st{cursor:default}
+.fxup{position:absolute;left:50%;top:6px;transform:translate(-50%,0);z-index:8;pointer-events:none;
+  font-family:var(--serif);font-weight:700;font-size:20px;color:var(--celadon-deep);white-space:nowrap;
+  text-shadow:0 0 6px #fff,0 0 2px #fff;animation:fxup 1.2s ease-out forwards}
+.fxup.big{font-size:22px;color:#B8860B}
+@keyframes fxup{0%{opacity:0;transform:translate(-50%,8px) scale(.7)}
+  15%{opacity:1;transform:translate(-50%,0) scale(1.15)}
+  30%{transform:translate(-50%,-6px) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-46px)}}
+.spk.pop{animation:pop .45s ease-out}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.7)}100%{transform:scale(1)}}
+.st.fxgoal .stimg{animation:goalglow 1.1s ease-out}
+@keyframes goalglow{0%{box-shadow:0 0 0 0 rgba(233,196,106,.95)}
+  60%{box-shadow:0 0 0 14px rgba(233,196,106,0)}100%{box-shadow:0 0 0 0 rgba(233,196,106,0)}}
+.st.fxgoal .chair{animation:pop .6s ease-out}
 .qbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
 .qchips .chip{min-height:38px;padding:0 13px;font-size:14px}
@@ -1172,7 +1186,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',snd:'kan:snd',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1243,7 +1257,7 @@ async function get(k,f){try{const v=await rawGet(k);return v?JSON.parse(v):f}cat
 async function set(k,v){
   try{await rawSet(k,JSON.stringify(v))}
   catch(e){warnStore(e);throw e}
-  if(typeof schedulePush==='function'&&k!==K.gh&&k!==K.gist&&k!==K.syncAt&&k!==K.bk&&k!==K.cnt)schedulePush();
+  if(typeof schedulePush==='function'&&k!==K.gh&&k!==K.gist&&k!==K.syncAt&&k!==K.snd&&k!==K.bk&&k!==K.cnt)schedulePush();
 }
 function warnStore(e){
   if(STORE==='none'){showBanner();return}
@@ -1282,6 +1296,7 @@ async function boot(){
   week=await get(K.week,null); if(!week){week={notes:['','','','','','',''],duty:[false,false,false,false,false,false,false]};try{await set(K.week,week)}catch(e){}}
   term=await get(K.term,null); if(!term){term={start:'2026-03-02',end:'2027-02-04',perWeek:3};try{await set(K.term,term)}catch(e){}}
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
+  sndOn=await get(K.snd,true);
   if(ghTok&&gistId)await syncPull(true);
   buildToday();await buildPsy();buildCards();await buildLog();await buildSeat();await buildAtt();await buildSync();buildRhythm();buildTerm();renderBkInfo();
 }
@@ -1739,7 +1754,7 @@ async function paintPhotos(root){
     if(d)el.src=d; else el.style.display='none';
   }
 }
-let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,actMode=false,qMode=false,qTag='발표',viewFlip=false,teacherView=false;
+let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,actMode=false,qMode=false,qTag='발표',viewFlip=false,teacherView=false,sndOn=true;
 
 async function buildSeat(){
   classes=await get(K.cls,[]);
@@ -1772,6 +1787,7 @@ function renderSeat(){
   if(!qList.includes(qTag))qTag='발표';
   $('#seatMain').innerHTML=`<div class="qbar">
       <button class="ghost ${qMode?'on':''}" id="qBtn">${qMode?'빠른 기록 끝':'빠른 기록'}</button>
+      ${qMode?`<button class="ghost" id="sndBtn">${sndOn?'소리 켬':'소리 끔'}</button>`:''}
       <button class="ghost viewsw" id="viewSw">${teacherView?'공유 화면':'교사 화면'}</button>
       ${qMode?`<div class="qchips">${qList.map(t=>`<button class="chip" data-q="${t}" aria-pressed="${t===qTag}">${t}</button>`).join('')}</div>`:''}
     </div>
@@ -1925,6 +1941,8 @@ function renderSeat(){
     if(!teacherView){swapMode=false;swapFirst=null}
     renderSeat();window.scrollTo(0,0);
   };
+  const sb=$('#sndBtn');
+  if(sb)sb.onclick=async()=>{sndOn=!sndOn;try{await set(K.snd,sndOn)}catch(e){};if(sndOn)chime('soft');renderSeat()};
   $('#qBtn').onclick=()=>{
     qMode=!qMode;
     if(qMode){swapMode=false;swapFirst=null;actMode=false;toast(`'${qTag}'을(를) 고르고 자리를 누르세요`)}
@@ -3083,17 +3101,66 @@ function renderDetail(){
   const pd=$('#phDel');if(pd)pd.onclick=()=>setPhoto('');
   $$('#detailBody .rm').forEach(b=>b.onclick=()=>delNote(b.dataset.id));
 }
+let actx=null;
+function tone(freq,start,dur,vol,type){
+  const t0=actx.currentTime+start;
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(freq,t0);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol,t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g);g.connect(actx.destination);
+  o.start(t0);o.stop(t0+dur+0.05);
+}
+function chime(kind){
+  if(!sndOn)return;
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    if(kind==='goal'){
+      [523.25,659.25,783.99,1046.5].forEach((f,i)=>{tone(f,i*0.09,0.55,0.22);tone(f*2,i*0.09,0.35,0.05)});
+    }else if(kind==='soft'){
+      tone(880,0,0.25,0.12);
+    }else{
+      tone(1046.5,0,0.4,0.2);tone(2093,0,0.25,0.05);
+      tone(1567.98,0.09,0.6,0.2);tone(3135.96,0.09,0.3,0.04);
+    }
+  }catch(e){}
+}
+function seatFx(idx,label,kind){
+  const el=document.querySelector(`#seatGrid .st[data-i="${idx}"]`);
+  if(!el)return;
+  const fx=document.createElement('span');
+  fx.className='fxup'+(kind==='goal'?' big':'');
+  fx.textContent=label;
+  el.appendChild(fx);
+  setTimeout(()=>fx.remove(),1300);
+  const b=el.querySelector('.spk');
+  if(b){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),500)}
+  el.classList.add(kind==='goal'?'fxgoal':'qflash');
+  setTimeout(()=>el.classList.remove('fxgoal','qflash'),kind==='goal'?1200:500);
+}
 async function quickNote(idx){
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=idx)c.students.push({n:'',ph:'',notes:[]});
   const st=c.students[idx];
+  const before=countSpeak(st),goal=c.goal||3;
   const d=new Date(),ds=`${d.getMonth()+1}/${d.getDate()}`;
   const nid='n'+Date.now();
   st.notes=[...(st.notes||[]),{id:nid,d:ds,t:qTag,ph:''}];
   try{await set(K.cls,classes)}catch(e){st.notes.pop();toast('저장하지 못했습니다');return}
   renderSeat();
-  const el=document.querySelector(`#seatGrid .st[data-i="${idx}"]`);
-  if(el){el.classList.add('qflash');setTimeout(()=>el.classList.remove('qflash'),500)}
+  const loud=QUICK_SAFE.includes(qTag);
+  if(loud){
+    const isSpk=/발표/.test(qTag);
+    const reached=isSpk&&before<goal&&countSpeak(st)>=goal;
+    const kind=reached?'goal':isSpk?'spk':'soft';
+    chime(kind);
+    seatFx(idx,reached?'목표 달성!':isSpk?'+1':qTag,kind);
+  }else{
+    const el=document.querySelector(`#seatGrid .st[data-i="${idx}"]`);
+    if(el){el.classList.add('qflash');setTimeout(()=>el.classList.remove('qflash'),500)}
+  }
   const nm=st.n||defNameOf(c,idx);
   undoBar(`${nm} · ${qTag} +1`,async()=>{
     st.notes=(st.notes||[]).filter(n=>n.id!==nid);
