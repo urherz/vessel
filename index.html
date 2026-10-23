@@ -1868,6 +1868,13 @@
   #ctimer:not(.big) { cursor: grab; touch-action: none; }
   #ctimer.dragging { cursor: grabbing; opacity: .9; }
   #ctimer:not(.big) .ct-top::before { content: '⠿'; color: #B9AE9C; margin-right: 4px; }
+
+  /* 📍 여기까지: 페이지 위 시간 칩 옆 */
+  .slide .stage-head .pin-chip { order: 2; margin-left: auto; margin-right: 8px; font-family: var(--serif); font-size: .5em; font-weight: 700; color: var(--ink-soft); border: 1px dashed var(--edge); border-radius: 999px; padding: 1px 12px; background: transparent; cursor: pointer; white-space: nowrap; }
+  .slide .stage-head .pin-chip:hover { border-style: solid; color: var(--ink); background: #FFF8E8; }
+  .slide .stage-head .pin-chip.on { color: #8A5A0B; border: 1.5px solid #C98A1E; background: #FFF4DC; }
+  @media print { .pin-chip { display: none !important; } }
+  #pin-pop { bottom: auto; }
 </style>
 </head>
 <body>
@@ -2882,7 +2889,7 @@ function __boot() {
       var c = s.cloneNode(true);
       c.classList.remove('active', 'scrolly', 'measuring'); c.style.fontSize = ''; if (!c.getAttribute('style')) c.removeAttribute('style');
       c.querySelectorAll('.block, header.lesson').forEach(function (e) { e.style.fontSize = ''; if (!e.getAttribute('style')) e.removeAttribute('style'); });
-      c.querySelectorAll('.photo-tools, .block-tools, .col-grip, .table-bar, .fn-tools, .fn-thread, .fn-resize, .photo-win, .rv-close, .rv-open, .prog-panel, .video-tools, .pp-tools, .cc-tools, .bogi-picked, .vt-tools, .sp-tools, .rv-hide').forEach(function (e) { e.remove(); });
+      c.querySelectorAll('.photo-tools, .block-tools, .col-grip, .table-bar, .fn-tools, .fn-thread, .fn-resize, .photo-win, .rv-close, .rv-open, .prog-panel, .video-tools, .pp-tools, .cc-tools, .bogi-picked, .vt-tools, .sp-tools, .rv-hide, .pin-chip').forEach(function (e) { e.remove(); });
       c.querySelectorAll('.fn-note.fn-copy, .match > svg.m-lines').forEach(function (e) { e.remove(); });
       c.querySelectorAll('.match').forEach(function (e) { e.removeAttribute('data-lines'); });
       c.querySelectorAll('.venn').forEach(function (e) { e.removeAttribute('data-pos'); var d = e.querySelector('.v-drop'); if (d) d.innerHTML = ''; });
@@ -3373,7 +3380,7 @@ function __boot() {
       c.querySelectorAll('section.stage').forEach(function (s) { s.classList.remove('active'); s.style.fontSize = ''; if (!s.getAttribute('style')) s.removeAttribute('style'); });
       c.querySelectorAll('section.stage .block, section.stage header.lesson').forEach(function (e) { e.style.fontSize = ''; if (!e.getAttribute('style')) e.removeAttribute('style'); });
       c.querySelectorAll('.current').forEach(function (e) { e.classList.remove('current'); e.removeAttribute('aria-current'); });
-      c.querySelectorAll('.photo-tools, .block-tools, .col-grip, .table-bar, .fn-tools, .fn-thread, .fn-resize, .photo-win, .rv-close, .rv-open, .prog-panel, .video-tools, .pp-tools, .cc-tools, .vt-tools, .sp-tools, .rv-hide, input[type=file]').forEach(function (e) { e.remove(); });
+      c.querySelectorAll('.photo-tools, .block-tools, .col-grip, .table-bar, .fn-tools, .fn-thread, .fn-resize, .photo-win, .rv-close, .rv-open, .prog-panel, .video-tools, .pp-tools, .cc-tools, .vt-tools, .sp-tools, .rv-hide, .pin-chip, input[type=file]').forEach(function (e) { e.remove(); });
       c.querySelectorAll('.fn-note.fn-copy, .match > svg.m-lines').forEach(function (e) { e.remove(); });
       c.querySelectorAll('.match').forEach(function (e) { e.removeAttribute('data-lines'); });
       c.querySelectorAll('.venn').forEach(function (e) { e.removeAttribute('data-pos'); var d = e.querySelector('.v-drop'); if (d) d.innerHTML = ''; });
@@ -4402,10 +4409,31 @@ function __boot() {
       var c = b.dataset.c, at = PROG.at[c];
       if (at && String(at.l) === String(L) && +at.p === P) delete PROG.at[c];
       else PROG.at[c] = { l: String(L), p: P, label: pages[P] ? (pages[P].dataset.label || '') : '' };
-      progSave(); pinShow();
+      progSave(); pinShow(); pinVis();
     });
-    document.addEventListener('click', function (e) { if (!pinPop.hidden && !pinPop.contains(e.target) && e.target !== pinBtn) pinPop.hidden = true; });
-    function pinVis() { pinBtn.hidden = toggle.hidden || !PROG.classes.length || editing; if (pinBtn.hidden) pinPop.hidden = true; }
+    document.addEventListener('click', function (e) { if (!pinPop.hidden && !pinPop.contains(e.target) && !(e.target.closest && e.target.closest('.pin-chip'))) pinPop.hidden = true; });
+    function pinVis() {
+      pinBtn.hidden = true;
+      document.querySelectorAll('.pin-chip').forEach(function (x) { x.remove(); });
+      if (toggle.hidden || editing) { pinPop.hidden = true; return; }
+      document.querySelectorAll('section.stage .stage-head').forEach(function (hd) {
+        var sec = hd.closest('section.stage'), l = sec.dataset.l, idx = [].indexOf.call(lessonSecs(+l), sec);
+        var who = PROG.classes.filter(function (c) { var at = PROG.at[c]; return at && String(at.l) === String(l) && +at.p === idx; });
+        var ch = document.createElement('button'); ch.type = 'button'; ch.className = 'pin-chip' + (who.length ? ' on' : ''); ch.setAttribute('contenteditable', 'false');
+        ch.textContent = who.length ? '📍 ' + who.join(', ') + ' 여기까지' : '📍 여기까지';
+        ch.title = '수업이 이 페이지에서 끝났으면 눌러서 반을 골라요';
+        var tm = hd.querySelector('.time'); hd.insertBefore(ch, tm || null);
+      });
+    }
+    document.getElementById('slide').addEventListener('click', function (e) {
+      var ch = e.target.closest && e.target.closest('.pin-chip'); if (!ch) return;
+      e.preventDefault(); e.stopPropagation();
+      if (!PROG.classes.length) { state.textContent = '목차의 반별 진도에서 반 설정을 먼저 해 주세요'; alert('먼저 반 이름을 정해 주세요.\n목차(≡) → 반별 진도 → 반 설정'); return; }
+      if (!pinPop.hidden) { pinPop.hidden = true; return; }
+      pinShow();
+      var r = ch.getBoundingClientRect(), pw = Math.min(360, window.innerWidth * 0.9);
+      pinPop.style.left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.right - pw)) + 'px'; pinPop.style.top = (r.bottom + 8) + 'px'; pinPop.style.bottom = 'auto';
+    }, true);
     new MutationObserver(function () { pinTabs(); }).observe(document.getElementById('pagenav'), { childList: true });
     function progRender() { progPanels(); progToc(); pinTabs(); pinVis(); }
     window.__progRender = progRender;
