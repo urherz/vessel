@@ -1186,7 +1186,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',snd:'kan:snd',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',snd:'kan:snd',tomb:'kan:tomb',chg:'kan:chg',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1257,7 +1257,18 @@ async function get(k,f){try{const v=await rawGet(k);return v?JSON.parse(v):f}cat
 async function set(k,v){
   try{await rawSet(k,JSON.stringify(v))}
   catch(e){warnStore(e);throw e}
-  if(typeof schedulePush==='function'&&k!==K.gh&&k!==K.gist&&k!==K.syncAt&&k!==K.snd&&k!==K.bk&&k!==K.cnt)schedulePush();
+  const meta=[K.gh,K.gist,K.syncAt,K.snd,K.bk,K.cnt,K.chg];
+  if(!meta.includes(k)&&!syncApplying){
+    try{await rawSet(K.chg,JSON.stringify(Date.now()))}catch(e){}
+    if(typeof schedulePush==='function')schedulePush();
+  }
+}
+let syncApplying=false;
+let tombs=null;
+async function tomb(id){
+  if(!id)return;
+  if(!tombs)tombs=await get(K.tomb,[]);
+  if(!tombs.includes(id)){tombs.push(id);if(tombs.length>3000)tombs=tombs.slice(-3000);await set(K.tomb,tombs)}
 }
 function warnStore(e){
   if(STORE==='none'){showBanner();return}
@@ -1455,7 +1466,7 @@ function renderLogList(){
   $$('#logList [data-le]').forEach(b=>b.onclick=()=>openLog(logs2.find(x=>x.id===b.dataset.le)));
   $$('#logList [data-ld]').forEach(b=>b.onclick=async()=>{
     if(!confirm('이 일지를 지울까요?'))return;
-    logs2=logs2.filter(x=>x.id!==b.dataset.ld);await set(K.log,logs2);renderLogList();renderLogCount();
+    logs2=logs2.filter(x=>x.id!==b.dataset.ld);await tomb(b.dataset.ld);await set(K.log,logs2);renderLogList();renderLogCount();
   });
   $$('#logList [data-mk]').forEach(b=>b.onclick=()=>{
     const x=logs2.find(y=>y.id===b.dataset.mk);
@@ -1478,7 +1489,7 @@ function buildCards(){
   $('#delCard').onclick=async()=>{
     const b=$('#delCard');
     if(b.dataset.armed){
-      cards=cards.filter(c=>c.id!==editing);
+      await tomb(editing);cards=cards.filter(c=>c.id!==editing);
       await set(K.cards,cards);closeEditor();renderCards();toast('지웠습니다');return;
     }
     b.dataset.armed='1';b.classList.add('arm');b.textContent='한 번 더 누르면 지워집니다';
@@ -1540,7 +1551,7 @@ function renderCards(){
   });
   $$('#cardList .edit').forEach(b=>b.onclick=()=>openEditor(cards.find(c=>c.id===b.dataset.id)));
   $$('#cardList .del').forEach(b=>b.onclick=async()=>{
-    if(b.dataset.armed){cards=cards.filter(c=>c.id!==b.dataset.id);await set(K.cards,cards);renderCards();renderSuggests();toast('지웠습니다');return}
+    if(b.dataset.armed){await tomb(b.dataset.id);cards=cards.filter(c=>c.id!==b.dataset.id);await set(K.cards,cards);renderCards();renderSuggests();toast('지웠습니다');return}
     $$('#cardList .del').forEach(x=>{delete x.dataset.armed;x.classList.remove('arm');x.textContent='지우기'});
     b.dataset.armed='1';b.classList.add('arm');b.textContent='정말 지울까요?';
     setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.classList.remove('arm');b.textContent='지우기'}},4000);
@@ -1633,7 +1644,7 @@ async function buildPsy(){
   $('#psyDel').onclick=async()=>{
     const b=$('#psyDel');
     if(!b.dataset.armed){b.dataset.armed='1';b.textContent='정말 지울까요? 카드 연결도 풀립니다';return}
-    psy=psy.filter(x=>x.id!==psyEditing);
+    await tomb(psyEditing);psy=psy.filter(x=>x.id!==psyEditing);
     cards=cards.map(c=>({...c,v:(c.v||[]).map(v=>v.p===psyEditing?{...v,p:''}:v)}));
     try{await set(K.psy,psy);await set(K.cards,cards)}catch(e){}
     closePsy();renderCards();toast('지웠습니다');
@@ -2327,7 +2338,7 @@ function renderAtt(){
     ${x.txt?`<p class="atx">${esc(x.txt)}</p>`:''}`).join('');
   $$('#attList [data-ad]').forEach(b=>b.onclick=async()=>{
     if(!confirm('이 기록을 지울까요?'))return;
-    atts=atts.filter(x=>x.id!==b.dataset.ad);
+    await tomb(b.dataset.ad);atts=atts.filter(x=>x.id!==b.dataset.ad);
     try{await set(K.att,atts)}catch(e){}
     renderAtt();
   });
@@ -2375,26 +2386,88 @@ function attExport(csv){
 let ghTok='',gistId='',syncTimer=null,syncBusy=false;
 async function collectAll(){
   const imgs={};
-  for(const c of classes)for(const st of c.students){
+  const cls=await get(K.cls,[]);
+  for(const c of cls)for(const st of c.students){
     if(st.ph){const d=await phGet(st.ph);if(d)imgs[st.ph]=d}
     for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
   }
-  return {v:1,at:Date.now(),classes,imgs,
+  return {v:2,at:await get(K.chg,0),classes:cls,imgs,
     cards:await get(K.cards,[]),psy:await get(K.psy,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
-    week:await get(K.week,null),term:await get(K.term,null)};
+    week:await get(K.week,null),term:await get(K.term,null),tomb:await get(K.tomb,[])};
+}
+/* 합치기: 기록은 양쪽 모두 살리고, 지운 것만 뺀다. 배치·이름 같은 설정은 더 최근 쪽을 따른다 */
+function mergeById(a,b,dead,preferB){
+  const m=new Map();
+  (preferB?a:b).forEach(x=>{if(x&&x.id)m.set(x.id,x)});
+  (preferB?b:a).forEach(x=>{if(x&&x.id)m.set(x.id,x)});
+  return [...m.values()].filter(x=>!dead.has(x.id));
+}
+function mergeData(L,Rm){
+  const dead=new Set([...(L.tomb||[]),...(Rm.tomb||[])]);
+  const rNewer=(Rm.at||0)>(L.at||0);
+  const base=rNewer?Rm:L, other=rNewer?L:Rm;
+  const out={...base,tomb:[...dead].slice(-3000),imgs:{...(other.imgs||{}),...(base.imgs||{})}};
+  out.at=Math.max(L.at||0,Rm.at||0);
+  /* 반 */
+  const bc=(base.classes||[]).filter(c=>!dead.has(c.id));
+  const oc=(other.classes||[]).filter(c=>!dead.has(c.id));
+  out.classes=bc.map(c=>{
+    const o=oc.find(x=>x.id===c.id);
+    if(!o)return c;
+    const used=new Set();
+    const students=(c.students||[]).map((st,i)=>{
+      let j=st.n?(o.students||[]).findIndex((x,k)=>!used.has(k)&&x.n===st.n):-1;
+      if(j<0&&!(o.students&&o.students[i]&&o.students[i].n&&o.students[i].n!==st.n)&&!used.has(i))j=i;
+      const os=j>=0&&o.students?o.students[j]:null;
+      if(j>=0)used.add(j);
+      if(!os)return st;
+      return {...st,
+        notes:mergeById(st.notes||[],os.notes||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
+        career:mergeById(st.career||[],os.career||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
+        hope:st.hope||os.hope||'',ph:st.ph||os.ph||''};
+    });
+    return {...c,students};
+  });
+  oc.forEach(c=>{if(!out.classes.find(x=>x.id===c.id))out.classes.push(c)});
+  /* 목록형 */
+  ['cards','psy','wlog','att'].forEach(k=>{out[k]=mergeById(other[k]||[],base[k]||[],dead,true)});
+  out.wlog.sort((a,b)=>(a.id<b.id?1:-1));
+  out.att.sort((a,b)=>a.d<b.d?1:-1);
+  /* 리듬: 날짜별 */
+  const lm=new Map();
+  (other.logs||[]).forEach(x=>lm.set(x.date,x));
+  (base.logs||[]).forEach(x=>lm.set(x.date,x));
+  out.logs=[...lm.values()].sort((a,b)=>a.date<b.date?-1:1);
+  return out;
 }
 async function applyAll(d){
-  for(const k in (d.imgs||{})){try{await phSet(k,d.imgs[k])}catch(e){}}
-  if(d.classes){classes=d.classes;try{await set(K.cls,classes)}catch(e){}}
-  if(d.cards){cards=d.cards.map(norm);try{await set(K.cards,cards)}catch(e){}}
-  if(d.psy&&d.psy.length){psy=d.psy;try{await set(K.psy,psy)}catch(e){};renderPsy()}
-  if(d.logs){logs=d.logs;try{await set(K.logs,logs)}catch(e){}}
-  if(d.wlog){logs2=d.wlog;try{await set(K.log,logs2)}catch(e){}}
-  if(d.week){week=d.week;try{await set(K.week,week)}catch(e){}}
-  if(d.term){term=d.term;try{await set(K.term,term)}catch(e){}}
-  try{await set(K.syncAt,d.at)}catch(e){}
-  curCls=classes.length?classes[0].id:null;
-  renderCards();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();if(typeof renderAtt==='function')renderAtt();
+  syncApplying=true;
+  try{
+    for(const k in (d.imgs||{})){try{await phSet(k,d.imgs[k])}catch(e){}}
+    if(d.classes){classes=d.classes;try{await set(K.cls,classes)}catch(e){}}
+    if(d.cards){cards=d.cards.map(norm);try{await set(K.cards,cards)}catch(e){}}
+    if(d.psy&&d.psy.length){psy=d.psy;try{await set(K.psy,psy)}catch(e){}}
+    if(d.logs){logs=d.logs;try{await set(K.logs,logs)}catch(e){}}
+    if(d.wlog){logs2=d.wlog;try{await set(K.log,logs2)}catch(e){}}
+    if(d.att){atts=d.att;try{await set(K.att,atts)}catch(e){}}
+    if(d.attR&&d.attR.length){attRoster=d.attR.map(x=>typeof x==='string'?{no:'',n:x}:x);try{await set(K.attR,attRoster)}catch(e){}}
+    if(d.week){week=d.week;try{await set(K.week,week)}catch(e){}}
+    if(d.term){term=d.term;try{await set(K.term,term)}catch(e){}}
+    if(d.tomb){tombs=d.tomb;try{await set(K.tomb,tombs)}catch(e){}}
+    try{await rawSet(K.chg,JSON.stringify(d.at||Date.now()))}catch(e){}
+  }finally{syncApplying=false}
+  if(!classes.find(x=>x.id===curCls))curCls=classes.length?classes[0].id:null;
+  try{renderCards();renderPsy();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();if(typeof renderAtt==='function')renderAtt()}catch(e){}
+}
+async function fetchRemote(){
+  const r=await ghFetch('https://api.github.com/gists/'+gistId,{cache:'no-store'});
+  if(!r.ok)throw new Error();
+  const g=await r.json();
+  const raw=g.files['vessel-sync.json'];
+  let txt=raw.content;
+  if(raw.truncated){txt=await (await fetch(raw.raw_url,{cache:'no-store'})).text()}
+  const d=JSON.parse(txt||'{}');
+  return (d&&d.at)?d:null;
 }
 function ghFetch(url,opt={}){
   opt.headers=Object.assign({'Authorization':'token '+ghTok,'Accept':'application/vnd.github+json'},opt.headers||{});
@@ -2412,44 +2485,60 @@ async function findOrCreateGist(){
   if(!r.ok)throw new Error('저장소를 만들지 못했습니다');
   return (await r.json()).id;
 }
+let syncAgain=false;
 async function syncPush(){
-  if(!ghTok||!gistId||syncBusy)return;
-  syncBusy=true;setSyncStat('올리는 중…');
+  if(!ghTok||!gistId)return;
+  if(syncBusy){syncAgain=true;return}
+  syncBusy=true;setSyncStat('맞추는 중…');
   try{
-    const data=await collectAll();
+    const local=await collectAll();
+    const remote=await fetchRemote().catch(()=>null);
+    const merged=remote?mergeData(local,remote):local;
+    if(remote)await applyAll(merged);
+    merged.at=Math.max(merged.at||0,Date.now());
     const r=await ghFetch('https://api.github.com/gists/'+gistId,{method:'PATCH',
-      body:JSON.stringify({files:{'vessel-sync.json':{content:JSON.stringify(data)}}})});
+      body:JSON.stringify({files:{'vessel-sync.json':{content:JSON.stringify(merged)}}})});
     if(!r.ok)throw new Error();
-    await set(K.syncAt,data.at);
+    try{await rawSet(K.chg,JSON.stringify(merged.at))}catch(e){}
+    await set(K.syncAt,merged.at);
     const b=$('#syncTop');if(b)b.classList.remove('need');
-    setSyncStat('방금 올렸습니다');
+    setSyncStat('방금 맞췄습니다');
   }catch(e){setSyncStat('올리기 실패. 인터넷을 확인해주세요')}
   syncBusy=false;
+  if(syncAgain){syncAgain=false;setTimeout(syncPush,300)}
 }
 async function syncPull(silent){
   if(!ghTok||!gistId)return;
   if(!silent)setSyncStat('받아오는 중…');
   try{
-    const r=await ghFetch('https://api.github.com/gists/'+gistId);
-    if(!r.ok)throw new Error();
-    const g=await r.json();
-    let raw=g.files['vessel-sync.json'];
-    let txt=raw.content;
-    if(raw.truncated){txt=await (await fetch(raw.raw_url)).text()}
-    const d=JSON.parse(txt||'{}');
-    if(!d||!d.at){if(!silent)setSyncStat('아직 올린 내용이 없습니다');return}
-    const localAt=await get(K.syncAt,0);
-    if(d.at<=localAt){if(!silent)setSyncStat('이미 최신입니다');return}
-    await applyAll(d);
+    const remote=await fetchRemote();
+    if(!remote){if(!silent)setSyncStat('아직 올린 내용이 없습니다');return}
+    const local=await collectAll();
+    const merged=mergeData(local,remote);
+    await applyAll(merged);
+    /* 이 기기에만 있던 기록이 있으면 바로 올린다 */
+    if(JSON.stringify(merged.classes)!==JSON.stringify(remote.classes)||
+       (merged.att||[]).length!==(remote.att||[]).length||
+       (merged.wlog||[]).length!==(remote.wlog||[]).length)schedulePush(800);
+    else{const b=$('#syncTop');if(b)b.classList.remove('need')}
     setSyncStat('받아왔습니다');
   }catch(e){if(!silent)setSyncStat('받아오기 실패')}
 }
-function schedulePush(){
+function schedulePush(ms){
   const b=$('#syncTop');if(b)b.classList.add('need');
   if(!ghTok||!gistId)return;
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(syncPush,4000);
+  syncTimer=setTimeout(syncPush,ms||1500);
 }
+/* 창을 닫거나 다른 앱으로 넘어갈 때 바로 올리기, 돌아오면 받아오기 */
+document.addEventListener('visibilitychange',()=>{
+  if(!ghTok||!gistId)return;
+  if(document.visibilityState==='hidden'){
+    if($('#syncTop')&&$('#syncTop').classList.contains('need')){clearTimeout(syncTimer);syncPush()}
+  }else{
+    syncPull(true);
+  }
+});
 function setSyncStat(t){const el=$('#syncStat');if(el)el.textContent=t}
 async function buildSync(){
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
@@ -2465,7 +2554,7 @@ async function buildSync(){
       return;
     }
     const b=$('#syncTop');b.classList.add('busy');b.textContent='…';
-    await syncPull(true);await syncPush();
+    await syncPush();
     b.classList.remove('busy');b.textContent='동기화';toast('동기화했습니다');
   };
   $('#ghConnect').onclick=async()=>{
@@ -2949,7 +3038,7 @@ async function delCls(){
     if(st.ph)await phDelKey(st.ph);
     for(const n of (st.notes||[]))if(n.ph)await phDelKey(n.ph);
   }
-  classes=classes.filter(x=>x.id!==editCls);
+  await tomb(editCls);classes=classes.filter(x=>x.id!==editCls);
   if(curCls===editCls)curCls=classes.length?classes[0].id:null;
   await set(K.cls,classes);
   $('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;renderSeat();toast('지웠습니다');
@@ -3038,7 +3127,7 @@ function renderDetail(){
   $$('#detailBody [data-cid]').forEach(b=>b.onclick=async()=>{
     if(!confirm('이 진로 기록을 지울까요?'))return;
     const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
-    st2.career=(st2.career||[]).filter(x=>x.id!==b.dataset.cid);
+    await tomb(b.dataset.cid);st2.career=(st2.career||[]).filter(x=>x.id!==b.dataset.cid);
     try{await set(K.cls,classes)}catch(e){}
     renderDetail();
   });
@@ -3164,6 +3253,7 @@ async function quickNote(idx){
   const nm=st.n||defNameOf(c,idx);
   undoBar(`${nm} · ${qTag} +1`,async()=>{
     st.notes=(st.notes||[]).filter(n=>n.id!==nid);
+    await tomb(nid);
     try{await set(K.cls,classes)}catch(e){}
     renderSeat();toast('되돌렸습니다');
   });
@@ -3199,6 +3289,7 @@ async function delNote(id){
   const n=(st.notes||[]).find(x=>x.id===id);
   if(n&&n.ph)await phDelKey(n.ph);
   st.notes=(st.notes||[]).filter(x=>x.id!==id);
+  await tomb(id);
   await set(K.cls,classes);renderDetail();
 }
 function shrink(file,W,H,q,cb){
