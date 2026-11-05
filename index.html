@@ -428,6 +428,9 @@ body.share .st{cursor:default}
 @keyframes goalglow{0%{box-shadow:0 0 0 0 rgba(233,196,106,.95)}
   60%{box-shadow:0 0 0 14px rgba(233,196,106,0)}100%{box-shadow:0 0 0 0 rgba(233,196,106,0)}}
 .st.fxgoal .chair{animation:pop .6s ease-out}
+.wkbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:#F6E9E6;border:1px solid var(--seal);border-radius:3px;padding:10px 12px;margin:0 0 12px;font-size:14.5px;color:var(--seal)}
+.wkbar button{background:var(--seal);color:#F7F2F0;border:0;border-radius:99px;min-height:40px;padding:0 16px;font-size:14px;cursor:pointer;font-family:inherit}
 .qbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
 .qchips .chip{min-height:38px;padding:0 13px;font-size:14px}
@@ -843,7 +846,7 @@ body.share .st{cursor:default}
         <button class="ghost" id="expBtn" style="width:100%;min-height:46px">지금 파일로 내려받기</button>
         <p class="bkinfo" id="bkInfo"></p>
         <div style="border-top:1px solid var(--rule);margin-top:16px;padding-top:14px">
-          <p class="eyebrow">기기 동기화</p>
+          <p class="eyebrow">기기 동기화 <span id="appVer" style="letter-spacing:0;opacity:.6"></span></p>
           <p style="font-size:14.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.7" id="syncStat">GitHub 계정으로 여러 기기에서 같은 내용을 봅니다.</p>
           <div id="syncSetup">
             <input type="password" id="ghTok" placeholder="GitHub 토큰 붙여넣기">
@@ -854,6 +857,8 @@ body.share .st{cursor:default}
               <button class="ghost" id="syncPullBtn" style="flex:1;min-height:46px">받아오기</button>
               <button class="ghost" id="syncPushBtn" style="flex:1;min-height:46px">올리기</button>
             </div>
+            <button class="ghost" id="syncRecover" style="width:100%;min-height:46px;margin-top:8px">사라진 기록 되살리기</button>
+            <p style="font-size:13.5px;color:var(--ink-faint);margin:6px 0 0;line-height:1.6">지난 동기화 기록 전체를 뒤져 빠진 발표·기록을 다시 합칩니다. 1~2분 걸릴 수 있습니다.</p>
             <button class="lnk" id="ghDisc" style="width:100%;margin-top:6px">연결 끊기</button>
           </div>
         </div>
@@ -1015,6 +1020,7 @@ body.share .st{cursor:default}
 <div class="toast" id="toast"></div>
 
 <script>
+const APP_VER='2611050307';
 window.addEventListener('error',function(e){
   try{
     if(document.getElementById('errBox'))return;
@@ -1186,7 +1192,7 @@ const SUGGEST=[
  {c:'동료·업무',i:'수업 공개나 컨설팅 피드백을 받을 때'},
  {c:'동료·업무',i:'갑자기 보결 수업이 잡혔을 때'}
 ];
-const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',snd:'kan:snd',tomb:'kan:tomb',chg:'kan:chg',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
+const K={cards:'kan:cards',logs:'kan:logs',week:'kan:week',term:'kan:term',sv:'kan:seedv',cls:'kan:cls',psy:'kan:psy',snd:'kan:snd',tomb:'kan:tomb',chg:'kan:chg',phUp:'kan:phup',ev:'kan:ev',dev:'kan:dev',evm:'kan:evm',wexp:'kan:wexp',log:'kan:log',att:'kan:att',attR:'kan:attr',gh:'kan:gh',gist:'kan:gist',syncAt:'kan:syncat',bk:'kan:bk',auto:'kan:auto',cnt:'kan:cnt'};
 let cards=[],logs=[],week=null,term=null,sel={band:0,tags:[]},filter='전체';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -1257,18 +1263,48 @@ async function get(k,f){try{const v=await rawGet(k);return v?JSON.parse(v):f}cat
 async function set(k,v){
   try{await rawSet(k,JSON.stringify(v))}
   catch(e){warnStore(e);throw e}
-  const meta=[K.gh,K.gist,K.syncAt,K.snd,K.bk,K.cnt,K.chg];
+  const meta=[K.gh,K.gist,K.syncAt,K.snd,K.bk,K.cnt,K.chg,K.dev,K.evm];
   if(!meta.includes(k)&&!syncApplying){
     try{await rawSet(K.chg,JSON.stringify(Date.now()))}catch(e){}
     if(typeof schedulePush==='function')schedulePush();
   }
 }
 let syncApplying=false;
-let tombs=null;
+let tombs=null,evs=null,devId=null;
+async function myDev(){
+  if(devId)return devId;
+  devId=await get(K.dev,'');
+  if(!devId){devId='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);try{await rawSet(K.dev,JSON.stringify(devId))}catch(e){}}
+  return devId;
+}
+async function seedLedger(){
+  if(await get(K.evm,false))return;
+  const cls=await get(K.cls,[]);
+  const list=await get(K.ev,[]);
+  const have=new Set(list.filter(e=>e.o).map(e=>e.o.id));
+  const now=Date.now();
+  cls.forEach(c=>{ensureSid(c);(c.students||[]).forEach(st=>{
+    (st.notes||[]).forEach(n=>{if(!have.has(n.id))list.push({k:'n',c:c.id,s:st.sid,sn:st.n||'',o:n,at:now})});
+    (st.career||[]).forEach(n=>{if(!have.has(n.id))list.push({k:'c',c:c.id,s:st.sid,sn:st.n||'',o:n,at:now})});
+  })});
+  (await get(K.att,[])).forEach(a=>{if(!have.has(a.id))list.push({k:'a',o:a,at:now})});
+  evs=list;
+  syncApplying=true;
+  try{await set(K.ev,list);await set(K.cls,cls)}catch(e){}
+  syncApplying=false;
+  try{await rawSet(K.evm,JSON.stringify(true))}catch(e){}
+}
+async function logEv(e){
+  if(!evs)evs=await get(K.ev,[]);
+  e.at=Date.now();
+  evs.push(e);
+  await set(K.ev,evs);
+}
 async function tomb(id){
   if(!id)return;
   if(!tombs)tombs=await get(K.tomb,[]);
   if(!tombs.includes(id)){tombs.push(id);if(tombs.length>3000)tombs=tombs.slice(-3000);await set(K.tomb,tombs)}
+  await logEv({k:'x',id});
 }
 function warnStore(e){
   if(STORE==='none'){showBanner();return}
@@ -1308,8 +1344,11 @@ async function boot(){
   term=await get(K.term,null); if(!term){term={start:'2026-03-02',end:'2027-02-04',perWeek:3};try{await set(K.term,term)}catch(e){}}
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
   sndOn=await get(K.snd,true);
+  window._wexp=await get(K.wexp,0);
+  await seedLedger();
   if(ghTok&&gistId)await syncPull(true);
   buildToday();await buildPsy();buildCards();await buildLog();await buildSeat();await buildAtt();await buildSync();buildRhythm();buildTerm();renderBkInfo();
+  setTimeout(checkUpdate,3000);
 }
 
 $$('nav button').forEach(b=>b.onclick=()=>{
@@ -1769,6 +1808,7 @@ let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',
 
 async function buildSeat(){
   classes=await get(K.cls,[]);
+  {let need=false;classes.forEach(c=>{if((c.students||[]).some(st=>!st.sid)){ensureSid(c);need=true}});if(need){syncApplying=true;try{await set(K.cls,classes)}catch(e){}syncApplying=false}}
   if(classes.length&&!curCls)curCls=classes[0].id;
   $('#setupBack').onclick=()=>{$('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;window.scrollTo(0,0)};
   $('#detailBack').onclick=()=>{$('#seatDetail').hidden=true;$('#seatBrowse').hidden=false;renderSeat();window.scrollTo(0,0)};
@@ -1796,7 +1836,11 @@ function renderSeat(){
   document.body.classList.toggle('share',!teacherView);
   const qList=teacherView?QUICK:QUICK_SAFE;
   if(!qList.includes(qTag))qTag='발표';
-  $('#seatMain').innerHTML=`<div class="qbar">
+  const wl=window._wexp||0,wdays=wl?Math.floor((Date.now()-wl)/864e5):999;
+  const hasRec=classes.some(x=>x.students.some(st=>(st.notes||[]).length));
+  const wNeed=teacherView&&hasRec&&wdays>=7;
+  $('#seatMain').innerHTML=`${wNeed?`<div class="wkbar"><span>${wl?`기록을 받은 지 ${wdays}일 지났습니다`:'아직 주간 기록을 받지 않았습니다'}</span><button id="wkBtn">이번 주 기록 받기</button></div>`:''}
+    <div class="qbar">
       <button class="ghost ${qMode?'on':''}" id="qBtn">${qMode?'빠른 기록 끝':'빠른 기록'}</button>
       ${qMode?`<button class="ghost" id="sndBtn">${sndOn?'소리 켬':'소리 끔'}</button>`:''}
       <button class="ghost viewsw" id="viewSw">${teacherView?'공유 화면':'교사 화면'}</button>
@@ -1818,6 +1862,7 @@ function renderSeat(){
         <button class="ghost tonly" id="clsEdit">반 수정</button>
       </span>
     </div>
+    <div class="row tonly" style="gap:8px;margin-top:10px"><button class="ghost" id="expRec" style="flex:1;min-height:48px">이 반 기록 받기</button><button class="ghost" id="expAll" style="flex:1;min-height:48px">전체 반 기록 받기</button></div>
     <button class="ghost tonly" id="shareSpk" style="width:100%;min-height:48px;margin-top:10px">발표 현황 공유</button>
     <label class="phbtn tonly" for="bulkPh" style="margin-top:8px">사진 일괄 넣기 (파일명 = 학생 이름)
       <input type="file" accept="image/*" multiple id="bulkPh"></label>`;
@@ -1947,6 +1992,7 @@ function renderSeat(){
       <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
+  const wkb=$('#wkBtn');if(wkb)wkb.onclick=exportAll;
   $('#viewSw').onclick=()=>{
     teacherView=!teacherView;
     if(!teacherView){swapMode=false;swapFirst=null}
@@ -1970,7 +2016,7 @@ function renderSeat(){
       const g=groupOf(ordO.gsizes,idx);
       if(g<0)return;
       if(!c.actDone)c.actDone={};
-      c.actDone[g]=!c.actDone[g];
+      c.actDone[g]=!c.actDone[g];c.au=Date.now();
       set(K.cls,classes).catch(()=>{});
       renderSeat();return;
     }
@@ -2006,6 +2052,7 @@ function renderSeat(){
       const t=arr[i];arr[i]=arr[j];arr[j]=t;
     }
     c2.students=[...arr,...c2.students.slice(cnt)];
+    ensureSid(c2);c2.u=Date.now();
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
     renderSeat();toast('뽑았습니다. 다시 뽑으려면 한 번 더.');
   };
@@ -2033,6 +2080,8 @@ function renderSeat(){
   $('#clsMvL').onclick=()=>moveCur(-1);
   $('#clsMvR').onclick=()=>moveCur(1);
   $('#shareSpk').onclick=shareSpeak;
+  $('#expRec').onclick=exportRecords;
+  $('#expAll').onclick=exportAll;
   $('#bulkPh').onchange=e=>{const fs=[...e.target.files];if(fs.length)bulkPhotos(fs);e.target.value=''};
 }
 function emptyCol(seats,cols,c){
@@ -2103,15 +2152,57 @@ async function bulkPhotos(files){
     if(idx<0){miss.push(base);continue}
     try{
       const data=await shrinkCover(f);
-      const id='p'+curCls+'_'+idx;
+      const id='p'+curCls+'_'+Date.now().toString(36)+idx;
       await phSet(id,data);
-      c.students[idx].ph=id;
+      c.students[idx].ph=id;c.students[idx].u=Date.now();
       okCnt++;
     }catch(e){miss.push(base)}
   }
   try{await set(K.cls,classes)}catch(e){}
   renderSeat();
   toast(miss.length?`${okCnt}명 연결 · 못 찾음: ${miss.slice(0,4).join(', ')}${miss.length>4?' 외':''}`:`${okCnt}명 모두 연결했습니다`);
+}
+async function exportAll(){
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[['반','자리','이름','발표 횟수','날짜','기록'].map(q).join(',')];
+  classes.forEach(c=>{
+    const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
+    c.students.forEach((st,i)=>{
+      if(i>=ord.length&&!(st.notes||[]).length)return;
+      const seat=i<ord.length?defNameOf(c,i):'',nm=st.n||seat,cnt=countSpeak(st);
+      const ns=st.notes||[];
+      if(!ns.length)rows.push([c.name,seat,nm,cnt,'',''].map(q).join(','));
+      ns.forEach(n=>rows.push([c.name,seat,nm,cnt,n.d,n.t].map(q).join(',')));
+    });
+  });
+  const blob=new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download=`기록_전체_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);
+  window._wexp=Date.now();
+  try{await set(K.wexp,window._wexp)}catch(e){}
+  toast('이번 주 기록을 내려받았습니다');
+  renderSeat();
+}
+function exportRecords(){
+  const c=classes.find(x=>x.id===curCls);if(!c)return;
+  const ord=seatOrder(c.seats,c.cols,c.dirs||[]);
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[['반','자리','이름','발표 횟수','날짜','기록'].map(q).join(',')];
+  c.students.forEach((st,i)=>{
+    if(i>=ord.length&&!(st.notes||[]).length)return;
+    const nm=st.n||defNameOf(c,i),seat=defNameOf(c,i),cnt=countSpeak(st);
+    const ns=st.notes||[];
+    if(!ns.length)rows.push([c.name,seat,nm,cnt,'',''].map(q).join(','));
+    ns.forEach(n=>rows.push([c.name,seat,nm,cnt,n.d,n.t].map(q).join(',')));
+  });
+  const blob=new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download=`기록_${c.name}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);
+  toast('내려받았습니다');
 }
 async function shareSpeak(){
   const c=classes.find(x=>x.id===curCls);
@@ -2306,7 +2397,9 @@ async function buildAtt(){
   $('#attSave').onclick=async()=>{
     const n=$('#attName').value.trim();
     if(!n){toast('이름을 확인해주세요');return}
-    atts=[{id:'a'+Date.now(),d:$('#attDate').value||todayKey(),t:attType,n,txt:$('#attMsg').value.trim()},...atts];
+    const aobj={id:'a'+Date.now(),d:$('#attDate').value||todayKey(),t:attType,n,txt:$('#attMsg').value.trim()};
+    atts=[aobj,...atts];
+    logEv({k:'a',o:aobj});
     atts.sort((a,b)=>a.d<b.d?1:-1);
     try{await set(K.att,atts)}catch(e){toast('저장하지 못했습니다');return}
     $('#attMsg').value='';$('#attName').value='';
@@ -2384,18 +2477,34 @@ function attExport(csv){
 }
 /* ── 기기 동기화 (GitHub 비공개 Gist) ── */
 let ghTok='',gistId='',syncTimer=null,syncBusy=false;
-async function collectAll(){
-  const imgs={};
-  const cls=await get(K.cls,[]);
-  for(const c of cls)for(const st of c.students){
-    if(st.ph){const d=await phGet(st.ph);if(d)imgs[st.ph]=d}
-    for(const nn of (st.notes||[]))if(nn.ph){const d=await phGet(nn.ph);if(d)imgs[nn.ph]=d}
+function photoKeys(cls){
+  const ks=[];
+  for(const c of cls)for(const st of (c.students||[])){
+    if(st.ph)ks.push(st.ph);
+    for(const nn of (st.notes||[]))if(nn.ph)ks.push(nn.ph);
   }
-  return {v:2,at:await get(K.chg,0),classes:cls,imgs,
+  return ks;
+}
+async function collectAll(){
+  const cls=(await get(K.cls,[])).map(ensureSid);
+  return {v:3,ver:APP_VER,at:await get(K.chg,0),classes:cls,imgs:{},
     cards:await get(K.cards,[]),psy:await get(K.psy,[]),logs:await get(K.logs,[]),wlog:await get(K.log,[]),att:await get(K.att,[]),attR:await get(K.attR,[]),
-    week:await get(K.week,null),term:await get(K.term,null),tomb:await get(K.tomb,[])};
+    week:await get(K.week,null),term:await get(K.term,null),tomb:await get(K.tomb,[]),wexp:await get(K.wexp,0)};
 }
 /* 합치기: 기록은 양쪽 모두 살리고, 지운 것만 뺀다. 배치·이름 같은 설정은 더 최근 쪽을 따른다 */
+function ensureSid(c){
+  const seen=new Set();
+  (c.students||[]).forEach((st,i)=>{
+    if(!st.sid){
+      let id='s_'+c.id+'_'+(st.n?st.n:'#'+i);
+      if(seen.has(id))id+='_'+i;
+      st.sid=id;
+    }
+    seen.add(st.sid);
+  });
+  return c;
+}
+function newSid(c,name){return 's_'+c.id+'_'+(name||'#')+'_'+Date.now().toString(36)}
 function mergeById(a,b,dead,preferB){
   const m=new Map();
   (preferB?a:b).forEach(x=>{if(x&&x.id)m.set(x.id,x)});
@@ -2408,25 +2517,33 @@ function mergeData(L,Rm){
   const base=rNewer?Rm:L, other=rNewer?L:Rm;
   const out={...base,tomb:[...dead].slice(-3000),imgs:{...(other.imgs||{}),...(base.imgs||{})}};
   out.at=Math.max(L.at||0,Rm.at||0);
-  /* 반 */
-  const bc=(base.classes||[]).filter(c=>!dead.has(c.id));
-  const oc=(other.classes||[]).filter(c=>!dead.has(c.id));
+  out.wexp=Math.max(L.wexp||0,Rm.wexp||0);
+  /* 반: 배치·순서는 그 반을 더 최근에 고친 쪽, 학생 정보는 그 학생을 더 최근에 고친 쪽, 기록은 양쪽 모두 */
+  const bc=(base.classes||[]).filter(c=>!dead.has(c.id)).map(c=>ensureSid(JSON.parse(JSON.stringify(c))));
+  const oc=(other.classes||[]).filter(c=>!dead.has(c.id)).map(c=>ensureSid(JSON.parse(JSON.stringify(c))));
   out.classes=bc.map(c=>{
     const o=oc.find(x=>x.id===c.id);
     if(!o)return c;
-    const used=new Set();
-    const students=(c.students||[]).map((st,i)=>{
-      let j=st.n?(o.students||[]).findIndex((x,k)=>!used.has(k)&&x.n===st.n):-1;
-      if(j<0&&!(o.students&&o.students[i]&&o.students[i].n&&o.students[i].n!==st.n)&&!used.has(i))j=i;
-      const os=j>=0&&o.students?o.students[j]:null;
-      if(j>=0)used.add(j);
-      if(!os)return st;
-      return {...st,
-        notes:mergeById(st.notes||[],os.notes||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
-        career:mergeById(st.career||[],os.career||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
-        hope:st.hope||os.hope||'',ph:st.ph||os.ph||''};
+    const P=((o.u||0)>(c.u||0))?o:c, Q=(P===o)?c:o;
+    const qmap=new Map((Q.students||[]).map(st=>[st.sid,st]));
+    const usedQ=new Set();
+    const students=(P.students||[]).map(st=>{
+      const q=qmap.get(st.sid);
+      if(!q)return st;
+      usedQ.add(st.sid);
+      const F=((q.u||0)>(st.u||0))?q:st, G=(F===q)?st:q;
+      return {...F,sid:st.sid,
+        notes:mergeById(st.notes||[],q.notes||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
+        career:mergeById(st.career||[],q.career||[],dead,false).sort((a,b)=>a.id<b.id?-1:1),
+        hope:F.hope||G.hope||'',ph:F.ph||G.ph||''};
     });
-    return {...c,students};
+    /* 한쪽에만 있던 학생의 기록은 버리지 않는다 */
+    (Q.students||[]).forEach(st=>{
+      if(usedQ.has(st.sid))return;
+      if((st.notes||[]).length||(st.career||[]).length||st.n)students.push(st);
+    });
+    const A=((o.au||0)>(c.au||0))?o:c;
+    return {...P,students,actDone:A.actDone||{},au:Math.max(o.au||0,c.au||0),u:Math.max(o.u||0,c.u||0)};
   });
   oc.forEach(c=>{if(!out.classes.find(x=>x.id===c.id))out.classes.push(c)});
   /* 목록형 */
@@ -2440,10 +2557,36 @@ function mergeData(L,Rm){
   out.logs=[...lm.values()].sort((a,b)=>a.date<b.date?-1:1);
   return out;
 }
+function applyEvents(d,lists){
+  const dead=new Set(d.tomb||[]);
+  const all=[].concat(...lists.filter(Array.isArray));
+  all.forEach(e=>{if(e&&e.k==='x'&&e.id)dead.add(e.id)});
+  d.tomb=[...dead].slice(-5000);
+  const cls=d.classes||[];
+  all.forEach(e=>{
+    if(!e||!e.o||dead.has(e.o.id))return;
+    if(e.k==='a'){d.att=d.att||[];if(!d.att.some(x=>x.id===e.o.id))d.att.push(e.o);return}
+    if(e.k!=='n'&&e.k!=='c')return;
+    const c=cls.find(x=>x.id===e.c);if(!c)return;
+    ensureSid(c);
+    let st=(c.students||[]).find(x=>x.sid===e.s);
+    if(!st&&e.sn)st=(c.students||[]).find(x=>x.n===e.sn);
+    if(!st)return;
+    const key=e.k==='n'?'notes':'career';
+    st[key]=st[key]||[];
+    if(!st[key].some(x=>x.id===e.o.id)){st[key].push(e.o);st[key].sort((a,b)=>a.id<b.id?-1:1)}
+  });
+  cls.forEach(c=>(c.students||[]).forEach(st=>{
+    if(st.notes)st.notes=st.notes.filter(x=>!dead.has(x.id));
+    if(st.career)st.career=st.career.filter(x=>!dead.has(x.id));
+  }));
+  if(d.att)d.att=d.att.filter(x=>!dead.has(x.id)).sort((a,b)=>a.d<b.d?1:-1);
+  return d;
+}
 async function applyAll(d){
   syncApplying=true;
   try{
-    for(const k in (d.imgs||{})){try{await phSet(k,d.imgs[k])}catch(e){}}
+    for(const k in (d.imgs||{})){try{if(!(await phGet(k)))await phSet(k,d.imgs[k])}catch(e){}}
     if(d.classes){classes=d.classes;try{await set(K.cls,classes)}catch(e){}}
     if(d.cards){cards=d.cards.map(norm);try{await set(K.cards,cards)}catch(e){}}
     if(d.psy&&d.psy.length){psy=d.psy;try{await set(K.psy,psy)}catch(e){}}
@@ -2454,20 +2597,40 @@ async function applyAll(d){
     if(d.week){week=d.week;try{await set(K.week,week)}catch(e){}}
     if(d.term){term=d.term;try{await set(K.term,term)}catch(e){}}
     if(d.tomb){tombs=d.tomb;try{await set(K.tomb,tombs)}catch(e){}}
+    if(d.wexp){window._wexp=Math.max(window._wexp||0,d.wexp);try{await set(K.wexp,window._wexp)}catch(e){}}
     try{await rawSet(K.chg,JSON.stringify(d.at||Date.now()))}catch(e){}
   }finally{syncApplying=false}
   if(!classes.find(x=>x.id===curCls))curCls=classes.length?classes[0].id:null;
   try{renderCards();renderPsy();renderSeat();buildRhythm();buildTerm();renderStreak();renderLogList();if(typeof renderAtt==='function')renderAtt()}catch(e){}
 }
-async function fetchRemote(){
-  const r=await ghFetch('https://api.github.com/gists/'+gistId,{cache:'no-store'});
-  if(!r.ok)throw new Error();
-  const g=await r.json();
-  const raw=g.files['vessel-sync.json'];
+async function readFile(raw){
+  if(!raw)return null;
   let txt=raw.content;
   if(raw.truncated){txt=await (await fetch(raw.raw_url,{cache:'no-store'})).text()}
-  const d=JSON.parse(txt||'{}');
-  return (d&&d.at)?d:null;
+  try{return JSON.parse(txt||'{}')}catch(e){return null}
+}
+async function fetchGist(sha){
+  const r=await ghFetch('https://api.github.com/gists/'+gistId+(sha?'/'+sha:'')+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('gist '+r.status);
+  return r.json();
+}
+async function fetchRemote(){
+  const g=await fetchGist();
+  let d=await readFile(g.files['vessel-sync.json']);
+  const hasEv=Object.keys(g.files||{}).some(fn=>/^ev-/.test(fn));
+  if((!d||!d.at)&&!hasEv)return null;
+  d=d&&d.at?d:{at:1,classes:[],tomb:[]};
+  const ph=await readFile(g.files['vessel-photos.json']);
+  d.imgs={...(d.imgs||{}),...(ph||{})};
+  d._photoKeys=Object.keys(ph||{});
+  d._ev=[];
+  for(const fn of Object.keys(g.files||{})){
+    if(/^ev-.+\.json$/.test(fn)){
+      const arr=await readFile(g.files[fn]);
+      if(Array.isArray(arr)){d._ev.push(arr);d._evLen=d._evLen||{};d._evLen[fn.slice(3,-5)]=arr.length}
+    }
+  }
+  return d;
 }
 function ghFetch(url,opt={}){
   opt.headers=Object.assign({'Authorization':'token '+ghTok,'Accept':'application/vnd.github+json'},opt.headers||{});
@@ -2490,22 +2653,49 @@ async function syncPush(){
   if(!ghTok||!gistId)return;
   if(syncBusy){syncAgain=true;return}
   syncBusy=true;setSyncStat('맞추는 중…');
+  let ok=false;
   try{
-    const local=await collectAll();
-    const remote=await fetchRemote().catch(()=>null);
-    const merged=remote?mergeData(local,remote):local;
-    if(remote)await applyAll(merged);
-    merged.at=Math.max(merged.at||0,Date.now());
-    const r=await ghFetch('https://api.github.com/gists/'+gistId,{method:'PATCH',
-      body:JSON.stringify({files:{'vessel-sync.json':{content:JSON.stringify(merged)}}})});
-    if(!r.ok)throw new Error();
-    try{await rawSet(K.chg,JSON.stringify(merged.at))}catch(e){}
-    await set(K.syncAt,merged.at);
-    const b=$('#syncTop');if(b)b.classList.remove('need');
-    setSyncStat('방금 맞췄습니다');
+    for(let attempt=0;attempt<3&&!ok;attempt++){
+      const local=await collectAll();
+      const remote=await fetchRemote().catch(()=>null);
+      const mine=await get(K.ev,[]);
+      const merged=applyEvents(remote?mergeData(local,remote):local,[...(remote?remote._ev:[]),mine]);
+      await applyAll(merged);
+      const stamp=Math.max(merged.at||0,Date.now());
+      merged.at=stamp;
+      /* 사진: 원격에 없는 것만 묶어 올림 */
+      const files={};
+      const remoteHas=new Set(remote?remote._photoKeys:[]);
+      const keys=photoKeys(merged.classes||[]);
+      const missing=keys.filter(k=>!remoteHas.has(k));
+      if(missing.length){
+        const all={};
+        for(const k of keys){
+          const v=(remote&&remote.imgs&&remote.imgs[k])||await phGet(k);
+          if(v)all[k]=v;
+        }
+        files['vessel-photos.json']={content:JSON.stringify(all)};
+      }
+      const main={...merged,imgs:{}};delete main._photoKeys;delete main._ev;
+      files['vessel-sync.json']={content:JSON.stringify(main)};
+      files['ev-'+(await myDev())+'.json']={content:JSON.stringify(mine)};
+      const r=await ghFetch('https://api.github.com/gists/'+gistId,{method:'PATCH',body:JSON.stringify({files})});
+      if(!r.ok)throw new Error('push '+r.status);
+      /* 다른 기기가 그 사이 덮어쓰지 않았는지 확인 */
+      const check=await fetchRemote().catch(()=>null);
+      if(check&&check.at===stamp){
+        ok=true;
+        try{await rawSet(K.chg,JSON.stringify(stamp))}catch(e){}
+        await set(K.syncAt,stamp);
+      }
+    }
+    if(ok){
+      const b=$('#syncTop');if(b)b.classList.remove('need');
+      setSyncStat('방금 맞췄습니다 · '+new Date().toTimeString().slice(0,5));
+    }else setSyncStat('다른 기기와 겹쳐 다시 시도합니다');
   }catch(e){setSyncStat('올리기 실패. 인터넷을 확인해주세요')}
   syncBusy=false;
-  if(syncAgain){syncAgain=false;setTimeout(syncPush,300)}
+  if(syncAgain||!ok){syncAgain=false;setTimeout(syncPush,ok?300:5000)}
 }
 async function syncPull(silent){
   if(!ghTok||!gistId)return;
@@ -2514,12 +2704,15 @@ async function syncPull(silent){
     const remote=await fetchRemote();
     if(!remote){if(!silent)setSyncStat('아직 올린 내용이 없습니다');return}
     const local=await collectAll();
-    const merged=mergeData(local,remote);
+    const mine=await get(K.ev,[]);
+    const merged=applyEvents(mergeData(local,remote),[...remote._ev,mine]);
     await applyAll(merged);
+    const remoteMineLen=await (async()=>{const id=await myDev();return remote._evLen&&remote._evLen[id]||0})();
     /* 이 기기에만 있던 기록이 있으면 바로 올린다 */
     if(JSON.stringify(merged.classes)!==JSON.stringify(remote.classes)||
        (merged.att||[]).length!==(remote.att||[]).length||
-       (merged.wlog||[]).length!==(remote.wlog||[]).length)schedulePush(800);
+       (merged.wlog||[]).length!==(remote.wlog||[]).length||
+       mine.length>remoteMineLen)schedulePush(800);
     else{const b=$('#syncTop');if(b)b.classList.remove('need')}
     setSyncStat('받아왔습니다');
   }catch(e){if(!silent)setSyncStat('받아오기 실패')}
@@ -2530,17 +2723,68 @@ function schedulePush(ms){
   clearTimeout(syncTimer);
   syncTimer=setTimeout(syncPush,ms||1500);
 }
+setInterval(()=>{
+  if(document.visibilityState==='visible'&&ghTok&&gistId&&!syncBusy){
+    if($('#syncTop')&&$('#syncTop').classList.contains('need'))syncPush();else syncPull(true);
+  }
+},45000);
+async function checkUpdate(){
+  try{
+    const r=await fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'});
+    const t=await r.text();
+    const m=t.match(/const APP_VER='([^']+)'/);
+    if(m&&m[1]!==APP_VER){
+      try{if(sessionStorage.getItem('vupd')===m[1])return;sessionStorage.setItem('vupd',m[1])}catch(e){}
+      if($('#syncTop')&&$('#syncTop').classList.contains('need')&&ghTok&&gistId){await syncPush()}
+      location.replace(location.pathname+'?v='+m[1]);
+    }
+  }catch(e){}
+}
 /* 창을 닫거나 다른 앱으로 넘어갈 때 바로 올리기, 돌아오면 받아오기 */
 document.addEventListener('visibilitychange',()=>{
   if(!ghTok||!gistId)return;
   if(document.visibilityState==='hidden'){
     if($('#syncTop')&&$('#syncTop').classList.contains('need')){clearTimeout(syncTimer);syncPush()}
   }else{
+    checkUpdate();
     syncPull(true);
   }
 });
+async function recoverHistory(){
+  if(!ghTok||!gistId)return;
+  if(!confirm('지난 동기화 기록을 모두 확인해 빠진 기록을 다시 합칠까요?\n지금 있는 기록은 그대로 둡니다.'))return;
+  const b=$('#syncRecover');b.disabled=true;
+  try{
+    const r=await ghFetch('https://api.github.com/gists/'+gistId+'/commits?per_page=100&t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error();
+    const commits=await r.json();
+    const before=countAllNotes(await get(K.cls,[]));
+    let acc=await collectAll();
+    acc.at=Date.now();
+    const list=commits.slice(0,60);
+    for(let i=0;i<list.length;i++){
+      b.textContent=`확인 중 ${i+1}/${list.length}`;
+      try{
+        const g=await fetchGist(list[i].version);
+        const d=await readFile(g.files['vessel-sync.json']);
+        if(d&&d.classes){d.at=0;delete d.imgs;acc=mergeData(acc,d)}
+      }catch(e){}
+    }
+    acc.imgs={};
+    await applyAll(acc);
+    const after=countAllNotes(await get(K.cls,[]));
+    toast(after>before?`기록 ${after-before}개를 되살렸습니다`:'빠진 기록이 없었습니다');
+    if(after>before)schedulePush(500);
+  }catch(e){toast('되살리지 못했습니다. 인터넷을 확인해주세요')}
+  b.disabled=false;b.textContent='사라진 기록 되살리기';
+}
+function countAllNotes(cls){
+  let n=0;cls.forEach(c=>(c.students||[]).forEach(st=>{n+=(st.notes||[]).length+(st.career||[]).length}));
+  return n;
+}
 function setSyncStat(t){const el=$('#syncStat');if(el)el.textContent=t}
 async function buildSync(){
+  const av=$('#appVer');if(av)av.textContent='· 판 '+APP_VER;
   ghTok=await get(K.gh,'');gistId=await get(K.gist,'');
   const on=!!(ghTok&&gistId);
   $('#syncSetup').hidden=on;$('#syncOn').hidden=!on;
@@ -2573,6 +2817,7 @@ async function buildSync(){
   };
   $('#syncPullBtn').onclick=()=>syncPull(false);
   $('#syncPushBtn').onclick=syncPush;
+  $('#syncRecover').onclick=recoverHistory;
   $('#ghDisc').onclick=async()=>{
     if(!confirm('이 기기에서 동기화 연결을 끊을까요? 저장된 내용은 남습니다.'))return;
     ghTok='';gistId='';
@@ -2979,14 +3224,20 @@ async function saveCls(){
     });
   const cols=+$('#clsCols').value||6,rows=+$('#clsRows').value||5;
   const prev=classes.find(x=>x.id===editCls);
+  const now=Date.now();
+  const tmpC={id:editCls||'k'+now};
   const students=names.map(nm=>{
     const old=prev&&prev.students.find(s=>s.n===nm.n);
-    return old?{...old,n:nm.n,leader:nm.leader}:{n:nm.n,leader:nm.leader,ph:'',notes:[]};
+    if(old){
+      const changed=!!old.leader!==!!nm.leader;
+      return {...old,n:nm.n,leader:nm.leader,sid:old.sid||newSid(tmpC,nm.n),u:changed?now:(old.u||0)};
+    }
+    return {n:nm.n,leader:nm.leader,ph:'',notes:[],sid:newSid(tmpC,nm.n),u:now};
   });
   const gnames=$('#clsGnames').value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
-  const data={name,cols,rows,goal:+$('#clsGoal').value||3,gnames,seats:[...shape],dirs:[...dirs],students};
+  const data={name,cols,rows,goal:+$('#clsGoal').value||3,gnames,seats:[...shape],dirs:[...dirs],students,u:now};
   if(editCls){classes=classes.map(x=>x.id===editCls?{...x,...data}:x)}
-  else{const id='k'+Date.now();classes=[...classes,{id,...data}];curCls=id}
+  else{const id=tmpC.id;classes=[...classes,{id,...data}];curCls=id}
   await set(K.cls,classes);
   $('#seatSetup').hidden=true;$('#seatBrowse').hidden=false;renderSeat();
   toast(editCls?'저장했습니다':'반을 만들었습니다');
@@ -3002,7 +3253,8 @@ async function copyCls(){
     id,name,cols:src.cols,rows:src.rows,goal:src.goal||3,
     gnames:[...(src.gnames||[])],
     seats:[...src.seats],dirs:[...(src.dirs||[])],
-    students:src.students.map(()=>({n:'',ph:'',notes:[]}))
+    u:Date.now(),
+    students:src.students.map((_,i)=>({n:'',ph:'',notes:[],sid:'s_'+id+'_#'+i}))
   }];
   try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
   curCls=id;
@@ -3048,7 +3300,9 @@ async function delCls(){
 async function swapStudents(a,b){
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=Math.max(a,b))c.students.push({n:'',ph:'',notes:[]});
+  ensureSid(c);
   const t=c.students[a];c.students[a]=c.students[b];c.students[b]=t;
+  c.u=Date.now();
   swapFirst=null;
   try{await set(K.cls,classes)}catch(e){}
   renderSeat();toast('자리를 바꿨습니다');
@@ -3106,11 +3360,14 @@ function renderDetail(){
   paintPhotos($('#detailBody'));
   $('#careerAdd').onclick=async()=>{
     const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
-    st2.hope=$('#hopeIn').value.trim();
+    const nh=$('#hopeIn').value.trim();if(nh!==(st2.hope||''))st2.u=Date.now();st2.hope=nh;
     const v=$('#careerIn').value.trim();
     if(v){
       if(!st2.career)st2.career=[];
-      st2.career.push({id:'c'+Date.now(),d:todayKey().slice(5).replace('-','/'),t:v});
+      ensureSid(c2);
+      const cobj={id:'c'+Date.now(),d:todayKey().slice(5).replace('-','/'),t:v};
+      st2.career.push(cobj);
+      logEv({k:'c',c:c2.id,s:st2.sid,sn:st2.n||'',o:cobj});
     }
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
     renderDetail();toast('저장했습니다');
@@ -3144,19 +3401,19 @@ function renderDetail(){
         if(!confirm('정말 기록과 사진을 지울까요? 되돌릴 수 없습니다.'))return;
         if(st2.ph)await phDelKey(st2.ph);
         for(const nt of (st2.notes||[]))if(nt.ph)await phDelKey(nt.ph);
-        c2.students[curSeat]={n:name,ph:'',notes:[],leader:false};
+        c2.students[curSeat]={n:name,ph:'',notes:[],leader:false,sid:newSid(c2,name),u:Date.now()};c2.u=Date.now();
       }else{
-        st2.n=name;
+        st2.n=name;st2.u=Date.now();
       }
     }else{
-      st2.n=name;
+      st2.n=name;st2.u=Date.now();
     }
     try{await set(K.cls,classes)}catch(e){}
     renderDetail();toast('바꿨습니다');
   };
   $('#ldrTgl').onclick=async()=>{
     const c2=classes.find(x=>x.id===curCls),st2=c2.students[curSeat];
-    st2.leader=!st2.leader;
+    st2.leader=!st2.leader;st2.u=Date.now();
     try{await set(K.cls,classes)}catch(e){}
     renderDetail();toast(st2.leader?'모둠장으로 표시합니다':'해제했습니다');
   };
@@ -3236,8 +3493,11 @@ async function quickNote(idx){
   const before=countSpeak(st),goal=c.goal||3;
   const d=new Date(),ds=`${d.getMonth()+1}/${d.getDate()}`;
   const nid='n'+Date.now();
-  st.notes=[...(st.notes||[]),{id:nid,d:ds,t:qTag,ph:''}];
+  ensureSid(c);
+  const nobj={id:nid,d:ds,t:qTag,ph:''};
+  st.notes=[...(st.notes||[]),nobj];
   try{await set(K.cls,classes)}catch(e){st.notes.pop();toast('저장하지 못했습니다');return}
+  await logEv({k:'n',c:c.id,s:st.sid,sn:st.n||'',o:nobj});
   renderSeat();
   const loud=QUICK_SAFE.includes(qTag);
   if(loud){
@@ -3279,9 +3539,12 @@ async function addNote(t){
     try{await phSet(phId,pendPh)}
     catch(e){toast('사진을 저장하지 못했습니다. 글만 남깁니다');phId=''}
   }
-  st.notes=[...(st.notes||[]),{id:nid,d:ds,t,ph:phId}];
+  ensureSid(c);
+  const nobj={id:nid,d:ds,t,ph:phId};
+  st.notes=[...(st.notes||[]),nobj];
   try{await set(K.cls,classes)}
   catch(e){st.notes.pop();await phDelKey(phId);toast('저장하지 못했습니다');return}
+  await logEv({k:'n',c:c.id,s:st.sid,sn:st.n||'',o:nobj});
   pendPh='';$('#noteIn').value='';renderDetail();toast('남겼습니다');bump();
 }
 async function delNote(id){
@@ -3331,13 +3594,13 @@ async function setPhoto(dataUrl){
   const c=classes.find(x=>x.id===curCls),st=c.students[curSeat];
   const old=st.ph;
   if(!dataUrl){
-    await phDelKey(old);st.ph='';
+    await phDelKey(old);st.ph='';st.u=Date.now();
     await set(K.cls,classes);renderDetail();toast('사진을 지웠습니다');return;
   }
-  const id='p'+curCls+'_'+curSeat;
+  const id='p'+curCls+'_'+Date.now().toString(36);
   try{await phSet(id,dataUrl)}
   catch(e){toast('사진을 저장하지 못했습니다');return}
-  st.ph=id;
+  st.ph=id;st.u=Date.now();
   try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
   toast('사진을 넣었습니다');
   $('#seatDetail').hidden=true;$('#seatBrowse').hidden=false;renderSeat();window.scrollTo(0,0);
