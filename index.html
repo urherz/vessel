@@ -220,6 +220,8 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   color:#F4F5F1;background:var(--celadon-deep);border-radius:2px;
   padding:2px 6px;margin:-2px 0 0 -4px;line-height:1.4;white-space:nowrap;
 }
+.gname.gsw{pointer-events:auto;cursor:pointer;font-size:12.5px;padding:5px 10px;box-shadow:0 0 0 2px #F4F5F1,0 0 0 3px var(--celadon-deep)}
+.gname.gon{background:var(--seal);box-shadow:0 0 0 2px #F4F5F1,0 0 0 3px var(--seal)}
 .chair{
   position:absolute;z-index:3;width:14px;height:14px;
   background:var(--ink);border-radius:2px;opacity:.78;
@@ -410,13 +412,14 @@ button.ghost.pick{width:100%;min-height:44px;margin-top:4px}
 .tcard.flash{box-shadow:0 0 0 3px var(--celadon-deep);transition:box-shadow .3s}
 .viewsw{margin-left:auto}
 body.share nav,body.share .synctop,body.share .tonly,
-body.share #seatBrowse>.card,body.share #clsTabs [data-c="__new"]{display:none!important}
+body.share #seatBrowse>.card,body.share .bkmore,body.share #clsTabs [data-c="__new"]{display:none!important}
 body.share .st .dot{display:none}
 body.share .st.mark .stimg{border-color:var(--rule)}
 body.share .st{cursor:default}
 .fxup{position:absolute;left:50%;top:6px;transform:translate(-50%,0);z-index:8;pointer-events:none;
   font-family:var(--serif);font-weight:700;font-size:20px;color:var(--celadon-deep);white-space:nowrap;
   text-shadow:0 0 6px #fff,0 0 2px #fff;animation:fxup 1.2s ease-out forwards}
+.fxup.minus{color:var(--seal)}
 .fxup.big{font-size:22px;color:#B8860B}
 @keyframes fxup{0%{opacity:0;transform:translate(-50%,8px) scale(.7)}
   15%{opacity:1;transform:translate(-50%,0) scale(1.15)}
@@ -431,6 +434,42 @@ body.share .st{cursor:default}
 .wkbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   background:#F6E9E6;border:1px solid var(--seal);border-radius:3px;padding:10px 12px;margin:0 0 12px;font-size:14.5px;color:var(--seal)}
 .wkbar button{background:var(--seal);color:#F7F2F0;border:0;border-radius:99px;min-height:40px;padding:0 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.swbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;justify-content:space-between;
+  background:var(--celadon-deep);color:#F4F5F1;border-radius:4px;padding:11px 12px 11px 16px;margin:0 0 14px}
+.swbar b{display:block;font-size:15.5px;font-weight:600}
+.swbar span{display:block;font-size:13.5px;opacity:.85;margin-top:2px;line-height:1.5}
+.swbar button{flex:none;background:#F4F5F1;color:var(--celadon-deep);border:0;border-radius:99px;min-height:42px;padding:0 18px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.modebar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px 11px;border:1px solid var(--rule);border-radius:6px;background:#FBFAF6;cursor:pointer;font-family:inherit;color:var(--ink)}
+.mode i{font-style:normal;font-size:20px;line-height:1;margin-bottom:3px;color:var(--celadon-deep)}
+.mode b{font-size:15.5px;font-weight:600}
+.mode span{font-size:12px;color:var(--ink-faint);line-height:1.35;text-align:center}
+.mode.on{background:var(--celadon-deep);border-color:var(--celadon-deep);color:#F4F5F1}
+.mode.on i,.mode.on span{color:#F4F5F1}
+.guide{position:sticky;top:0;z-index:20;background:var(--celadon-deep);color:#F4F5F1;border-radius:6px;padding:12px 12px 12px 16px;margin:0 0 14px}
+.gtop{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.guide b{display:block;font-size:15.5px;font-weight:600}
+.guide .gtop span{display:block;font-size:13.5px;opacity:.85;margin-top:2px;line-height:1.5}
+.gend{flex:none;background:#F4F5F1;color:var(--celadon-deep);border:0;border-radius:99px;min-height:42px;padding:0 18px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.guide .qchips,.gact{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.guide .chip{background:rgba(244,245,241,.12);border-color:rgba(244,245,241,.45);color:#F4F5F1;min-height:40px}
+.guide .minchip.on{background:var(--seal);border-color:#F4F5F1;color:#fff;font-weight:600}
+.guide.minus{background:#7A3B34}
+.guide .chip[aria-pressed="true"]{background:#F4F5F1;color:var(--celadon-deep);border-color:#F4F5F1;font-weight:600}
+.seatfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:14.5px;color:var(--ink-faint)}
+.seatfoot .ghost.on{background:var(--paper-2)}
+.more{margin-top:16px;border:1px solid var(--rule);border-radius:6px;background:#FBFAF6}
+.more summary{cursor:pointer;padding:14px 16px;font-size:15px;color:var(--ink-soft);list-style:none}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"▾";float:right;color:var(--ink-faint)}
+.more[open] summary::after{content:"▴"}
+.msec{padding:4px 16px 14px;border-top:1px solid var(--rule)}
+.mh{font-size:12.5px;color:var(--ink-faint);letter-spacing:.08em;margin:10px 0 8px}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.mrow2 .ghost{min-height:46px;width:100%}
+.lbtn{border:1px solid var(--rule);border-radius:3px;color:var(--ink-soft);font-size:16.5px;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:46px;text-align:center}
+.lbtn input{display:none}
+.mnote{font-size:13px;color:var(--ink-faint);margin:2px 0 0;line-height:1.6}
 .qbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
 .qchips .chip{min-height:38px;padding:0 13px;font-size:14px}
@@ -840,7 +879,9 @@ body.share .st{cursor:default}
       <h2 class="sec">좌석표</h2>
       <div class="filters" id="clsTabs"></div>
       <div id="seatMain"></div>
-      <div class="card" style="margin-top:22px">
+      <details class="more bkmore" style="margin-top:12px">
+      <summary>백업 · 기기 동기화</summary>
+      <div class="card" style="margin:0;border:0;border-top:1px solid var(--rule);border-radius:0">
         <p class="eyebrow">백업</p>
         <p style="font-size:16px;color:var(--ink-soft);margin:0 0 12px;line-height:1.7">기기 동기화가 켜져 있으면 자동으로 저장됩니다. 파일은 필요할 때만 받으세요.</p>
         <button class="ghost" id="expBtn" style="width:100%;min-height:46px">지금 파일로 내려받기</button>
@@ -865,6 +906,7 @@ body.share .st{cursor:default}
         <label class="phbtn" for="impIn" style="margin-top:14px">백업 파일 불러오기
           <input type="file" accept="application/json,.json" id="impIn"></label>
       </div>
+      </details>
     </div>
 
     <div id="seatSetup" hidden>
@@ -1020,7 +1062,7 @@ body.share .st{cursor:default}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VER='2611050307';
+const APP_VER='2611231144';
 window.addEventListener('error',function(e){
   try{
     if(document.getElementById('errBox'))return;
@@ -1804,7 +1846,7 @@ async function paintPhotos(root){
     if(d)el.src=d; else el.style.display='none';
   }
 }
-let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,actMode=false,qMode=false,qTag='발표',viewFlip=false,teacherView=false,sndOn=true;
+let classes=[],curCls=null,editCls=null,shape=[],dirs=[],curSeat=null,pendPh='',swapMode=false,swapFirst=null,gSel=null,actMode=false,qMode=false,qMinus=false,qTag='발표',viewFlip=false,teacherView=false,sndOn=true;
 
 async function buildSeat(){
   classes=await get(K.cls,[]);
@@ -1839,33 +1881,53 @@ function renderSeat(){
   const wl=window._wexp||0,wdays=wl?Math.floor((Date.now()-wl)/864e5):999;
   const hasRec=classes.some(x=>x.students.some(st=>(st.notes||[]).length));
   const wNeed=teacherView&&hasRec&&wdays>=7;
+  const cnt=seatOrder(c.seats,c.cols,c.dirs||[]).length;
+  const mode=qMode?'q':actMode?'act':swapMode?'swap':'';
+  const doneG=Object.values(c.actDone||{}).filter(Boolean).length;
+  const guide=mode==='q'?`<div class="guide ${qMinus?'minus':''}">
+      <div class="gtop"><div><b>${qMinus?`'${qTag}'을(를) 하나 뺄 학생 자리를 누르세요`:'기록할 것을 고르고, 학생 자리를 누르세요'}</b><span>${qMinus?'가장 최근 기록 하나가 빠집니다. 다 뺐으면 −1 빼기를 다시 눌러 끄세요':'한 번 누를 때마다 바로 +1. 잘못 누르면 아래 되돌리기'}</span></div><button class="gend" id="gEnd">끝내기</button></div>
+      <div class="qchips">${qList.map(t=>`<button class="chip" data-q="${t}" aria-pressed="${t===qTag}">${t}</button>`).join('')}
+        <button class="chip minchip ${qMinus?'on':''}" id="minBtn">${qMinus?'−1 빼는 중':'−1 빼기'}</button>
+        <button class="chip sndchip" id="sndBtn">${sndOn?'🔔 소리 켬':'🔕 소리 끔'}</button></div>
+    </div>`
+    :mode==='act'?`<div class="guide">
+      <div class="gtop"><div><b>활동을 다 한 모둠의 자리를 누르세요</b><span>모둠 전체가 파랗게 칠해집니다. 다시 누르면 풀립니다</span></div><button class="gend" id="gEnd">끝내기</button></div>
+      ${doneG?`<div class="gact"><button class="chip" id="actClear">파란색 모두 지우기 (새 활동)</button></div>`:''}
+    </div>`
+    :mode==='swap'?`<div class="guide">
+      <div class="gtop"><div><b>${gSel!==null?'바꿀 모둠 이름을 하나 더 누르세요':swapFirst!==null?'바꿀 학생을 한 명 더 누르세요':'바꿀 두 학생, 또는 두 모둠 이름을 누르세요'}</b><span>${gSel!==null||swapFirst!==null?'같은 것을 다시 누르면 취소됩니다':'학생 두 명 → 두 사람 자리 바꿈 · 모둠 이름 두 개 → 모둠 통째로 바꿈'}</span></div><button class="gend" id="gEnd">끝내기</button></div>
+      <div class="gact"><button class="chip" id="lotBtn">🎲 전체 무작위로 뽑기</button></div>
+    </div>`:'';
   $('#seatMain').innerHTML=`${wNeed?`<div class="wkbar"><span>${wl?`기록을 받은 지 ${wdays}일 지났습니다`:'아직 주간 기록을 받지 않았습니다'}</span><button id="wkBtn">이번 주 기록 받기</button></div>`:''}
-    <div class="qbar">
-      <button class="ghost ${qMode?'on':''}" id="qBtn">${qMode?'빠른 기록 끝':'빠른 기록'}</button>
-      ${qMode?`<button class="ghost" id="sndBtn">${sndOn?'소리 켬':'소리 끔'}</button>`:''}
-      <button class="ghost viewsw" id="viewSw">${teacherView?'공유 화면':'교사 화면'}</button>
-      ${qMode?`<div class="qchips">${qList.map(t=>`<button class="chip" data-q="${t}" aria-pressed="${t===qTag}">${t}</button>`).join('')}</div>`:''}
+    <div class="modebar">
+      <button class="mode ${mode==='q'?'on':''}" id="qBtn"><i>✎</i><b>기록하기</b><span>발표·질문 바로 +1</span></button>
+      <button class="mode ${mode==='act'?'on':''}" id="actBtn"><i>✓</i><b>활동 체크</b><span>다 한 모둠 표시</span></button>
+      <button class="mode ${mode==='swap'?'on':''}" id="swapBtn"><i>⇄</i><b>자리 바꾸기</b><span>학생·모둠 이동</span></button>
     </div>
+    ${guide}
     ${viewFlip?'<div class="board top">교 탁</div>':''}
     <div class="seatwrap"><div class="seats${viewFlip?' flip':''}" id="seatGrid"></div></div>
     ${viewFlip?'':'<div class="board">교탁</div>'}
-    <div class="row mt" style="justify-content:space-between">
-      <span class="tonly" style="font-size:15px;color:var(--ink-faint)">${seatOrder(c.seats,c.cols,c.dirs||[]).length}자리 · 발표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
-      <span class="row" style="gap:8px">
-        <button class="ghost tonly" id="clsMvL" title="탭 앞으로">◀</button>
-        <button class="ghost tonly" id="clsMvR" title="탭 뒤로">▶</button>
-        <button class="ghost" id="flipBtn">학생 시점</button>
-        <button class="ghost" id="actBtn">활동 체크</button>
-        <button class="ghost" id="lotBtn">자리 뽑기</button>
-        <button class="ghost tonly" id="swapBtn">자리 바꾸기</button>
-        <button class="ghost tonly" id="clsCopy2">반 복사</button>
-        <button class="ghost tonly" id="clsEdit">반 수정</button>
+    <div class="seatfoot">
+      <span class="tonly">${cnt}자리 · 발표 목표 ${c.students.filter(x=>x.n&&countSpeak(x)>=(c.goal||3)).length}/${c.students.filter(x=>x.n).length}명</span>
+      <span class="row" style="gap:8px;margin-left:auto">
+        <button class="ghost ${viewFlip?'on':''}" id="flipBtn">${viewFlip?'교사 시점으로':'학생 시점으로'}</button>
+        <button class="ghost" id="viewSw">${teacherView?'공유 화면으로':'교사 화면으로'}</button>
       </span>
     </div>
-    <div class="row tonly" style="gap:8px;margin-top:10px"><button class="ghost" id="expRec" style="flex:1;min-height:48px">이 반 기록 받기</button><button class="ghost" id="expAll" style="flex:1;min-height:48px">전체 반 기록 받기</button></div>
-    <button class="ghost tonly" id="shareSpk" style="width:100%;min-height:48px;margin-top:10px">발표 현황 공유</button>
-    <label class="phbtn tonly" for="bulkPh" style="margin-top:8px">사진 일괄 넣기 (파일명 = 학생 이름)
-      <input type="file" accept="image/*" multiple id="bulkPh"></label>`;
+    <details class="more tonly" id="moreBox" ${window._moreOpen?'open':''}>
+      <summary>더보기 · 반 관리, 기록 받기</summary>
+      <div class="msec"><p class="mh">이 반</p>
+        <div class="mrow2"><button class="ghost" id="clsEdit">반 수정 (자리·명렬표)</button><button class="ghost" id="clsCopy2">반 복사</button></div>
+        <div class="mrow2"><button class="ghost" id="clsMvL">◀ 탭 앞으로</button><button class="ghost" id="clsMvR">탭 뒤로 ▶</button></div>
+      </div>
+      <div class="msec"><p class="mh">기록</p>
+        <div class="mrow2"><button class="ghost" id="expRec">이 반 기록 받기</button><button class="ghost" id="expAll">전체 반 기록 받기</button></div>
+        <div class="mrow2"><button class="ghost" id="shareSpk">발표 현황 공유</button>
+        <label class="ghost lbtn" for="bulkPh">사진 한꺼번에 넣기<input type="file" accept="image/*" multiple id="bulkPh"></label></div>
+        <p class="mnote">사진 파일 이름을 학생 이름으로 해두면 알아서 자리에 들어갑니다.</p>
+      </div>
+    </details>`;
   const g=$('#seatGrid');
   /* 고정 크기: 교탁보기 60x40, 마주보기 40x60. 칸 60px, 이름 19px */
   const C=c.cols,R=Math.ceil(c.seats.length/C),NM=22;
@@ -1953,7 +2015,7 @@ function renderSeat(){
       let w=0;for(let k=cp.minC;k<=cp.maxC;k++)w+=parseFloat(colW[k]);
       w+=gap*(cp.maxC-cp.minC);
       let top=0;for(let k=0;k<cp.minR;k++)top+=parseFloat(rowH[k])+gap;
-      return`<span class="gname" style="left:${(left+w/2).toFixed(1)}px;top:${top-9}px;transform:translateX(-50%)">${esc(gname)}</span>`;
+      return`<button class="gname ${swapMode?'gsw':''} ${swapMode&&gSel===gi?'gon':''}" data-g="${gi}" style="left:${(left+w/2).toFixed(1)}px;top:${top-9}px;transform:translateX(-50%)">${esc(gname)}</button>`;
     }).join('');
   }
   g.innerHTML=glabels+seatsV.map((on,i)=>{
@@ -1992,6 +2054,15 @@ function renderSeat(){
       <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
   }).join('');
   paintPhotos(g);
+  if(swapMode&&swapFirst!==null){const sb=document.querySelector(`#seatGrid .st[data-i="${swapFirst}"]`);if(sb)sb.classList.add('selsw')}
+  $$('#seatGrid .gname').forEach(b=>b.onclick=()=>{
+    if(!swapMode)return;
+    const gi=+b.dataset.g;
+    if(swapFirst!==null){swapFirst=null}
+    if(gSel===null){gSel=gi;renderSeat();return}
+    if(gSel===gi){gSel=null;renderSeat();return}
+    swapGroups(gSel,gi);
+  });
   const wkb=$('#wkBtn');if(wkb)wkb.onclick=exportAll;
   $('#viewSw').onclick=()=>{
     teacherView=!teacherView;
@@ -2005,9 +2076,9 @@ function renderSeat(){
     if(qMode){swapMode=false;swapFirst=null;actMode=false;toast(`'${qTag}'을(를) 고르고 자리를 누르세요`)}
     renderSeat();
   };
-  $$('.qchips .chip').forEach(b=>b.onclick=()=>{
+  $$('.qchips .chip[data-q]').forEach(b=>b.onclick=()=>{
     qTag=b.dataset.q;
-    $$('.qchips .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    $$('.qchips .chip[data-q]').forEach(x=>x.setAttribute('aria-pressed',x===b));
   });
   $$('#seatGrid .st[data-i]').forEach(b=>b.onclick=()=>{
     const idx=+b.dataset.i;
@@ -2022,8 +2093,9 @@ function renderSeat(){
     }
     if(!teacherView&&!swapMode)return;
     if(swapMode){
-      if(swapFirst===null){swapFirst=idx;b.classList.add('selsw');return}
-      if(swapFirst===idx){swapFirst=null;b.classList.remove('selsw');return}
+      if(gSel!==null)gSel=null;
+      if(swapFirst===null){swapFirst=idx;renderSeat();return}
+      if(swapFirst===idx){swapFirst=null;renderSeat();return}
       swapStudents(swapFirst,idx);return;
     }
     openSeat(idx);
@@ -2033,7 +2105,7 @@ function renderSeat(){
     renderSeat();
   };
   if(viewFlip)$('#flipBtn').classList.add('on');
-  $('#lotBtn').onclick=async()=>{
+  if($('#lotBtn'))$('#lotBtn').onclick=async()=>{
     const c2=classes.find(x=>x.id===curCls);
     if(!c2)return;
     const cnt=seatOrder(c2.seats,c2.cols,c2.dirs||[]).length;
@@ -2064,17 +2136,25 @@ function renderSeat(){
     $('#actBtn').textContent=actMode?'체크 끝':'활동 체크';
     if(actMode)toast('다 한 모둠을 누르세요. 다시 누르면 풀립니다.');
   };
-  if(actMode){$('#actBtn').classList.add('on');$('#actBtn').textContent='체크 끝'}
   $('#swapBtn').onclick=()=>{
     swapMode=!swapMode;swapFirst=null;
     if(swapMode)qMode=false;
     if(swapMode){actMode=false;$('#actBtn').classList.remove('on');$('#actBtn').textContent='활동 체크'}
     $('#swapBtn').classList.toggle('on',swapMode);
     $('#swapBtn').textContent=swapMode?'바꾸기 끝':'자리 바꾸기';
-    if(swapMode)toast('바꿀 두 자리를 차례로 누르세요');
-    else renderSeat();
+    gSel=null;
+    renderSeat();
+    if(swapMode)window.scrollTo({top:$('#seatMain').getBoundingClientRect().top+window.scrollY-10,behavior:'smooth'});
   };
-  if(swapMode){$('#swapBtn').classList.add('on');$('#swapBtn').textContent='바꾸기 끝'}
+  ['q','act','swap'].forEach(m=>{const b=$('#'+({q:'qBtn',act:'actBtn',swap:'swapBtn'})[m]);if(b)b.onclick=()=>setSeatMode(m)});
+  const ge=$('#gEnd');if(ge)ge.onclick=()=>setSeatMode('');
+  const mn=$('#minBtn');if(mn)mn.onclick=()=>{qMinus=!qMinus;renderSeat()};
+  const ac=$('#actClear');if(ac)ac.onclick=async()=>{
+    if(!confirm('파란색 표시를 모두 지울까요?'))return;
+    c.actDone={};c.au=Date.now();try{await set(K.cls,classes)}catch(e){}
+    renderSeat();toast('지웠습니다');
+  };
+  const mb=$('#moreBox');if(mb)mb.ontoggle=()=>{window._moreOpen=mb.open};
   $('#clsEdit').onclick=()=>openCls(c);
   $('#clsCopy2').onclick=()=>{editCls=curCls;copyCls()};
   $('#clsMvL').onclick=()=>moveCur(-1);
@@ -2280,6 +2360,14 @@ function seatOrder(seats,cols,dirs){
     order.push(...cells);
   });
   return order;
+}
+function setSeatMode(m){
+  const cur=qMode?'q':actMode?'act':swapMode?'swap':'';
+  const next=(cur===m)?'':m;
+  qMode=next==='q';actMode=next==='act';swapMode=next==='swap';qMinus=false;
+  swapFirst=null;gSel=null;
+  renderSeat();
+  if(next){const el=$('#seatMain');if(el)window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-8,behavior:'smooth'})}
 }
 function groupOf(gsizes,idx){
   let g=0,p=idx;
@@ -2794,7 +2882,7 @@ async function buildSync(){
     if(!(ghTok&&gistId)){
       const tb=[...document.querySelectorAll('nav button')].find(x=>x.dataset.tab==='seat');
       if(tb)tb.click();
-      setTimeout(()=>{const el=$('#syncStat');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},60);
+      setTimeout(()=>{const bm=document.querySelector('.bkmore');if(bm)bm.open=true;const el=$('#syncStat');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},60);
       return;
     }
     const b=$('#syncTop');b.classList.add('busy');b.textContent='…';
@@ -2906,7 +2994,7 @@ async function importAll(file){
 }
 const ARROW=['↓','←','↑','→'];
 let shapeMode='on';
-let mvSel=null;
+let mvSel=null,editStud=[];
 /* 모둠 나누기 */
 function grpCombos(n,a,b){
   const out=[];
@@ -3006,7 +3094,8 @@ function openCls(c){
   $('#clsCols').value=cols;$('#clsRows').value=rows;
   $('#clsGoal').value=(c&&c.goal)||3;
   $('#clsGnames').value=(c&&c.gnames)?c.gnames.join(', '):'';
-  $('#clsNames').value=c?c.students.map(s=>s.leader?'('+s.n+')':s.n).join('\n'):'';
+  editStud=c?c.students.map(x=>x):[];
+  $('#clsNames').value=c?c.students.map(s=>s.leader?'('+s.n+')':s.n).join('\n').replace(/\n+$/,''):'';
   shape=c?[...c.seats]:Array(cols*rows).fill(false);
   dirs=(c&&c.dirs)?[...c.dirs]:Array(shape.length).fill(0);
   while(dirs.length<shape.length)dirs.push(0);
@@ -3140,6 +3229,7 @@ function swapComps(a,b){
     toast('모양 크기가 다른 모둠입니다. 같은 크기끼리 바꿀 수 있습니다.');
     mvSel=null;renderShape();return;
   }
+  if(a.set.size!==b.set.size){toast('인원이 다른 모둠입니다');mvSel=null;renderShape();return}
   const read=(cp)=>{
     const out=[];
     for(let r=0;r<=ah;r++)for(let c=0;c<=aw;c++){
@@ -3156,7 +3246,24 @@ function swapComps(a,b){
       shape[i]=data[k].on;dirs[i]=data[k].d;k++;
     }
   };
+  /* 학생도 모둠을 따라간다 */
+  const ord=seatOrder(shape,cols,dirs),gs=ord.gsizes;
+  const gOf=cp=>{for(let k=0;k<ord.length;k++)if(cp.set.has(ord[k]))return groupOf(gs,k);return -1};
+  const ga=gOf(a),gb=gOf(b);
   write(a,B);write(b,A);
+  if(ga>=0&&gb>=0&&gs[ga]===gs[gb]){
+    const off=g=>gs.slice(0,g).reduce((x,y)=>x+y,0);
+    const oa=off(ga),ob=off(gb),n=gs[ga];
+    const lines=$('#clsNames').value.split('\n');
+    const need=Math.max(oa,ob)+n;
+    while(lines.length<need)lines.push('');
+    while(editStud.length<need)editStud.push(null);
+    for(let k=0;k<n;k++){
+      let t=lines[oa+k];lines[oa+k]=lines[ob+k];lines[ob+k]=t;
+      t=editStud[oa+k];editStud[oa+k]=editStud[ob+k];editStud[ob+k]=t;
+    }
+    $('#clsNames').value=lines.join('\n').replace(/\n+$/,'');
+  }
   mvSel=null;
   renderShape();updCnt();
   toast('모둠 자리를 바꿨습니다');
@@ -3217,8 +3324,9 @@ function applyPreset(g){
 async function saveCls(){
   const name=$('#clsName').value.trim();
   if(!name){toast('반 이름을 적어주세요');return}
-  const names=$('#clsNames').value.split('\n').map(x=>x.trim()).filter(Boolean)
+  const names=$('#clsNames').value.replace(/\s+$/,'').split('\n').map(x=>x.trim())
     .map(x=>{
+      if(!x)return{n:'',leader:false};
       const m=x.match(/^[(（](.+)[)）]$/);
       return m?{n:m[1].trim(),leader:true}:{n:x,leader:false};
     });
@@ -3226,14 +3334,35 @@ async function saveCls(){
   const prev=classes.find(x=>x.id===editCls);
   const now=Date.now();
   const tmpC={id:editCls||'k'+now};
-  const students=names.map(nm=>{
-    const old=prev&&prev.students.find(s=>s.n===nm.n);
+  const pool=(editStud&&editStud.length)?editStud:(prev?prev.students:[]);
+  const newNames=new Set(names.map(x=>x.n).filter(Boolean));
+  const used=new Set();
+  const pick=(nm,i)=>{
+    if(nm.n){
+      const j=pool.findIndex((x,k)=>!used.has(k)&&x&&x.n===nm.n);
+      if(j>=0){used.add(j);return pool[j]}
+    }
+    const o=pool[i];
+    if(o&&!used.has(i)&&!(o.n&&newNames.has(o.n))){used.add(i);return o}
+    return null;
+  };
+  const students=names.map((nm,i)=>{
+    const old=pick(nm,i);
     if(old){
+      const renamed=(old.n||'')!==nm.n;
+      if(renamed){
+        return {...old,n:nm.n,leader:nm.leader,sid:old.sid||newSid(tmpC,nm.n),u:now};
+      }
       const changed=!!old.leader!==!!nm.leader;
       return {...old,n:nm.n,leader:nm.leader,sid:old.sid||newSid(tmpC,nm.n),u:changed?now:(old.u||0)};
     }
     return {n:nm.n,leader:nm.leader,ph:'',notes:[],sid:newSid(tmpC,nm.n),u:now};
   });
+  /* 명렬표에서 빠진 학생의 기록은 지우지 않고 자리 밖에 보관 */
+  const seatCnt=seatOrder(shape,cols,dirs).length;
+  const kept=pool.some((o,k)=>o&&!used.has(k)&&((o.notes||[]).length||(o.career||[]).length));
+  if(kept)while(students.length<seatCnt)students.push({n:'',ph:'',notes:[],sid:newSid(tmpC,'')+students.length,u:now});
+  pool.forEach((o,k)=>{if(o&&!used.has(k)&&((o.notes||[]).length||(o.career||[]).length))students.push({...o,u:now})});
   const gnames=$('#clsGnames').value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
   const data={name,cols,rows,goal:+$('#clsGoal').value||3,gnames,seats:[...shape],dirs:[...dirs],students,u:now};
   if(editCls){classes=classes.map(x=>x.id===editCls?{...x,...data}:x)}
@@ -3297,6 +3426,21 @@ async function delCls(){
 }
 
 /* 학생 상세 */
+async function swapGroups(ga,gb){
+  const c=classes.find(x=>x.id===curCls);
+  const gs=seatOrder(c.seats,c.cols,c.dirs||[]).gsizes;
+  gSel=null;
+  if(gs[ga]!==gs[gb]){toast(`인원이 다른 모둠입니다 (${gs[ga]}명 · ${gs[gb]}명)`);renderSeat();return}
+  const off=g=>gs.slice(0,g).reduce((a,b)=>a+b,0);
+  const oa=off(ga),ob=off(gb),n=gs[ga];
+  while(c.students.length<Math.max(oa,ob)+n)c.students.push({n:'',ph:'',notes:[]});
+  ensureSid(c);
+  for(let k=0;k<n;k++){const t=c.students[oa+k];c.students[oa+k]=c.students[ob+k];c.students[ob+k]=t}
+  if(c.actDone){const t=c.actDone[ga];c.actDone[ga]=c.actDone[gb];c.actDone[gb]=t;c.au=Date.now()}
+  c.u=Date.now();
+  try{await set(K.cls,classes)}catch(e){}
+  renderSeat();toast('모둠을 바꿨습니다');
+}
 async function swapStudents(a,b){
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=Math.max(a,b))c.students.push({n:'',ph:'',notes:[]});
@@ -3477,16 +3621,40 @@ function seatFx(idx,label,kind){
   const el=document.querySelector(`#seatGrid .st[data-i="${idx}"]`);
   if(!el)return;
   const fx=document.createElement('span');
-  fx.className='fxup'+(kind==='goal'?' big':'');
+  fx.className='fxup'+(kind==='goal'?' big':kind==='minus'?' minus':'');
   fx.textContent=label;
   el.appendChild(fx);
   setTimeout(()=>fx.remove(),1300);
   const b=el.querySelector('.spk');
   if(b){b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),500)}
-  el.classList.add(kind==='goal'?'fxgoal':'qflash');
+  if(kind!=='minus')el.classList.add(kind==='goal'?'fxgoal':'qflash');
   setTimeout(()=>el.classList.remove('fxgoal','qflash'),kind==='goal'?1200:500);
 }
+async function quickMinus(idx){
+  const c=classes.find(x=>x.id===curCls);
+  const st=c.students[idx];
+  const match=n=>qTag==='발표'?/발표/.test(n.t):n.t===qTag;
+  const list=(st&&st.notes)||[];
+  let k=-1;for(let i=list.length-1;i>=0;i--)if(match(list[i])){k=i;break}
+  const nm=(st&&st.n)||defNameOf(c,idx);
+  if(k<0){toast(`${nm} 학생은 뺄 '${qTag}' 기록이 없습니다`);return}
+  const gone=list[k];
+  st.notes=list.filter((_,i)=>i!==k);
+  await tomb(gone.id);
+  try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
+  renderSeat();
+  seatFx(idx,'−1','minus');
+  undoBar(`${nm} · ${qTag} −1`,async()=>{
+    ensureSid(c);
+    const back={...gone,id:'n'+Date.now()};
+    st.notes=[...(st.notes||[]),back];
+    try{await set(K.cls,classes)}catch(e){}
+    await logEv({k:'n',c:c.id,s:st.sid,sn:st.n||'',o:back});
+    renderSeat();toast('되돌렸습니다');
+  });
+}
 async function quickNote(idx){
+  if(qMinus)return quickMinus(idx);
   const c=classes.find(x=>x.id===curCls);
   while(c.students.length<=idx)c.students.push({n:'',ph:'',notes:[]});
   const st=c.students[idx];
@@ -3527,7 +3695,7 @@ function undoBar(msg,fn){
   u.classList.add('show');
   u.querySelector('button').onclick=()=>{u.classList.remove('show');clearTimeout(undoTimer);fn()};
   clearTimeout(undoTimer);
-  undoTimer=setTimeout(()=>u.classList.remove('show'),4000);
+  undoTimer=setTimeout(()=>u.classList.remove('show'),10000);
 }
 async function addNote(t){
   const d=new Date(),ds=`${d.getMonth()+1}/${d.getDate()}`;
