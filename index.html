@@ -230,7 +230,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fr .chair{left:-19px;top:50%;transform:translateY(-50%)}
 .st.talld.fl .chair{right:-19px;top:50%;transform:translateY(-50%)}
 .st .chair.ldr{background:var(--seal);opacity:1}
-.st.done .chair{box-shadow:0 0 0 4px #E9C46A;opacity:1}
+.st.done .nmh{background:#F3D77E;color:#3A2E0C;border-radius:3px;padding:1px 5px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .st.gdone .stimg{background:#C7DAEA;border-color:#5B87A8}
 .st.gdone .stimg::after{
   content:"";position:absolute;inset:0;background:rgba(91,135,168,.45);
@@ -430,7 +430,7 @@ body.share .st{cursor:default}
 .st.fxgoal .stimg{animation:goalglow 1.1s ease-out}
 @keyframes goalglow{0%{box-shadow:0 0 0 0 rgba(233,196,106,.95)}
   60%{box-shadow:0 0 0 14px rgba(233,196,106,0)}100%{box-shadow:0 0 0 0 rgba(233,196,106,0)}}
-.st.fxgoal .chair{animation:pop .6s ease-out}
+.st.fxgoal .nmh{display:inline-block;animation:pop .6s ease-out}
 .wkbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   background:#F6E9E6;border:1px solid var(--seal);border-radius:3px;padding:10px 12px;margin:0 0 12px;font-size:14.5px;color:var(--seal)}
 .wkbar button{background:var(--seal);color:#F7F2F0;border:0;border-radius:99px;min-height:40px;padding:0 16px;font-size:14px;cursor:pointer;font-family:inherit}
@@ -1062,7 +1062,7 @@ body.share .st{cursor:default}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VER='2611231144';
+const APP_VER='2611231149';
 window.addEventListener('error',function(e){
   try{
     if(document.getElementById('errBox'))return;
@@ -2051,7 +2051,7 @@ function renderSeat(){
         ${n?`<span class="dot"></span>`:''}
         <i class="chair ${st.leader?'ldr':''}"></i>
       </span>
-      <span class="nmx"><span class="nmt">${esc(st.n)||defName||'&nbsp;'}</span></span></button>`;
+      <span class="nmx"><span class="nmt"><span class="nmh">${esc(st.n)||defName||'&nbsp;'}</span></span></span></button>`;
   }).join('');
   paintPhotos(g);
   if(swapMode&&swapFirst!==null){const sb=document.querySelector(`#seatGrid .st[data-i="${swapFirst}"]`);if(sb)sb.classList.add('selsw')}
