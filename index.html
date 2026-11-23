@@ -176,8 +176,8 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
   display:flex;align-items:center;justify-content:center;
 }
 .st .nmt{
-  width:100%;font-family:var(--serif);font-size:11.5px;font-weight:500;
-  line-height:1.3;letter-spacing:-.04em;
+  width:100%;font-family:var(--serif);font-size:13px;font-weight:700;
+  line-height:1.3;letter-spacing:-.03em;
   white-space:nowrap;overflow:hidden;text-align:center;
 }
 .st .spk{
@@ -213,7 +213,7 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .st.talld.fl .nmx{justify-content:flex-start}
 .st.talld.fl .nmt{width:60px;text-align:center}
 .st.nu{flex-direction:column-reverse;justify-content:flex-start}
-.st.nu .nmx{padding:0 0 21px}
+.st.nu .nmx{padding:0 0 22px}
 .gname{
   position:absolute;z-index:4;pointer-events:none;
   font-family:var(--serif);font-size:10.5px;font-weight:500;letter-spacing:.02em;
@@ -242,9 +242,9 @@ label.f{display:block;font-size:12.5px;letter-spacing:.14em;color:var(--ink-fain
 .seats.flip .st.talld .nmx{padding:0 0 3px}
 .seats.flip .st.wide:not(.nu){justify-content:flex-start}
 .seats.flip .st.talld.fr .nmx{justify-content:flex-start}
-.seats.flip .st.talld.fr .nmt{width:38px;text-align:center;padding:0}
+.seats.flip .st.talld.fr .nmt{width:52px;text-align:center;padding:0;overflow:visible}
 .seats.flip .st.talld.fl .nmx{justify-content:flex-end}
-.seats.flip .st.talld.fl .nmt{width:38px;text-align:center;padding:0}
+.seats.flip .st.talld.fl .nmt{width:52px;text-align:center;padding:0;overflow:visible}
 .seats.flip .st.wide.nu .nmx{padding:0 0 3px}
 .board.top{border-top:0;border-bottom:1px solid var(--rule);padding:0 0 9px;margin:0 0 4px}
 .st.selsw .stimg{border-color:var(--seal);box-shadow:0 0 0 2px var(--seal)}
@@ -434,6 +434,12 @@ body.share .st{cursor:default}
 .wkbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   background:#F6E9E6;border:1px solid var(--seal);border-radius:3px;padding:10px 12px;margin:0 0 12px;font-size:14.5px;color:var(--seal)}
 .wkbar button{background:var(--seal);color:#F7F2F0;border:0;border-radius:99px;min-height:40px;padding:0 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.st.clash .stimg{border-color:#C0392B;box-shadow:0 0 0 2px #C0392B}
+.st.clash .nmh{color:#C0392B;font-weight:700;text-decoration:underline wavy #C0392B;text-underline-offset:3px}
+.clbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#FBEAE7;border:1px solid #C0392B;color:#A93226;border-radius:6px;padding:10px 12px;margin:0 0 10px;font-size:14.5px}
+.clbar button{background:#C0392B;color:#fff;border:0;border-radius:99px;min-height:38px;padding:0 14px;font-size:14px;cursor:pointer;font-family:inherit}
+.gnote{margin:10px 0 0;font-size:13.5px;line-height:1.6;opacity:.95}
+.gnote b{font-weight:700}
 .swbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;justify-content:space-between;
   background:var(--celadon-deep);color:#F4F5F1;border-radius:4px;padding:11px 12px 11px 16px;margin:0 0 14px}
 .swbar b{display:block;font-size:15.5px;font-weight:600}
@@ -446,10 +452,12 @@ body.share .st{cursor:default}
 .mode span{font-size:12px;color:var(--ink-faint);line-height:1.35;text-align:center}
 .mode.on{background:var(--celadon-deep);border-color:var(--celadon-deep);color:#F4F5F1}
 .mode.on i,.mode.on span{color:#F4F5F1}
-.guide{position:sticky;top:0;z-index:20;background:var(--celadon-deep);color:#F4F5F1;border-radius:6px;padding:12px 12px 12px 16px;margin:0 0 14px}
+.guide{position:sticky;top:0;z-index:20;background:var(--celadon-deep);color:#F4F5F1;border-radius:6px;padding:10px 10px;margin:0 0 14px}
 .gtop{display:flex;align-items:center;gap:12px;justify-content:space-between}
 .guide b{display:block;font-size:15.5px;font-weight:600}
 .guide .gtop span{display:block;font-size:13.5px;opacity:.85;margin-top:2px;line-height:1.5}
+.grow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.grow .gend{margin-left:auto}
 .gend{flex:none;background:#F4F5F1;color:var(--celadon-deep);border:0;border-radius:99px;min-height:42px;padding:0 18px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit}
 .guide .qchips,.gact{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .guide .chip{background:rgba(244,245,241,.12);border-color:rgba(244,245,241,.45);color:#F4F5F1;min-height:40px}
@@ -671,7 +679,7 @@ body.share .st{cursor:default}
   .logcols{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
   #logListHead{margin-top:0!important}
   /* 좌석 칸 이름 크게 */
-  .st .nmt{font-size:14px}
+  .st .nmt{font-size:15.5px}
   .st .spk{width:21px;height:21px;font-size:12px}
 }
 </style>
@@ -1062,7 +1070,7 @@ body.share .st{cursor:default}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VER='2611231149';
+const APP_VER='2611231529';
 window.addEventListener('error',function(e){
   try{
     if(document.getElementById('errBox'))return;
@@ -1881,24 +1889,23 @@ function renderSeat(){
   const wl=window._wexp||0,wdays=wl?Math.floor((Date.now()-wl)/864e5):999;
   const hasRec=classes.some(x=>x.students.some(st=>(st.notes||[]).length));
   const wNeed=teacherView&&hasRec&&wdays>=7;
+  ensureSid(c);
+  const clash=clashInfo(c);
   const cnt=seatOrder(c.seats,c.cols,c.dirs||[]).length;
   const mode=qMode?'q':actMode?'act':swapMode?'swap':'';
   const doneG=Object.values(c.actDone||{}).filter(Boolean).length;
-  const guide=mode==='q'?`<div class="guide ${qMinus?'minus':''}">
-      <div class="gtop"><div><b>${qMinus?`'${qTag}'을(를) 하나 뺄 학생 자리를 누르세요`:'기록할 것을 고르고, 학생 자리를 누르세요'}</b><span>${qMinus?'가장 최근 기록 하나가 빠집니다. 다 뺐으면 −1 빼기를 다시 눌러 끄세요':'한 번 누를 때마다 바로 +1. 잘못 누르면 아래 되돌리기'}</span></div><button class="gend" id="gEnd">끝내기</button></div>
-      <div class="qchips">${qList.map(t=>`<button class="chip" data-q="${t}" aria-pressed="${t===qTag}">${t}</button>`).join('')}
+  const END='<button class="gend" id="gEnd">끝내기</button>';
+  const guide=mode==='q'?`<div class="guide ${qMinus?'minus':''}"><div class="grow">
+        ${qList.map(t=>`<button class="chip" data-q="${t}" aria-pressed="${t===qTag}">${t}</button>`).join('')}
         <button class="chip minchip ${qMinus?'on':''}" id="minBtn">${qMinus?'−1 빼는 중':'−1 빼기'}</button>
-        <button class="chip sndchip" id="sndBtn">${sndOn?'🔔 소리 켬':'🔕 소리 끔'}</button></div>
-    </div>`
-    :mode==='act'?`<div class="guide">
-      <div class="gtop"><div><b>활동을 다 한 모둠의 자리를 누르세요</b><span>모둠 전체가 파랗게 칠해집니다. 다시 누르면 풀립니다</span></div><button class="gend" id="gEnd">끝내기</button></div>
-      ${doneG?`<div class="gact"><button class="chip" id="actClear">파란색 모두 지우기 (새 활동)</button></div>`:''}
-    </div>`
-    :mode==='swap'?`<div class="guide">
-      <div class="gtop"><div><b>${gSel!==null?'바꿀 모둠 이름을 하나 더 누르세요':swapFirst!==null?'바꿀 학생을 한 명 더 누르세요':'바꿀 두 학생, 또는 두 모둠 이름을 누르세요'}</b><span>${gSel!==null||swapFirst!==null?'같은 것을 다시 누르면 취소됩니다':'학생 두 명 → 두 사람 자리 바꿈 · 모둠 이름 두 개 → 모둠 통째로 바꿈'}</span></div><button class="gend" id="gEnd">끝내기</button></div>
-      <div class="gact"><button class="chip" id="lotBtn">🎲 전체 무작위로 뽑기</button></div>
-    </div>`:'';
+        <button class="chip sndchip" id="sndBtn">${sndOn?'🔔':'🔕'}</button>${END}</div></div>`
+    :mode==='act'?`<div class="guide"><div class="grow">
+        ${doneG?`<button class="chip" id="actClear">파란색 모두 지우기</button>`:''}${END}</div></div>`
+    :mode==='swap'?`<div class="guide"><div class="grow">
+        <button class="chip" id="prevSave">📌 ${c.prevGroups?'다시 기억하기':'지금 모둠 기억하기'}</button>
+        ${c.prevGroups?`<button class="chip" id="prevClear">기억 지우기</button>`:''}${END}</div></div>`:'';
   $('#seatMain').innerHTML=`${wNeed?`<div class="wkbar"><span>${wl?`기록을 받은 지 ${wdays}일 지났습니다`:'아직 주간 기록을 받지 않았습니다'}</span><button id="wkBtn">이번 주 기록 받기</button></div>`:''}
+    ${teacherView&&clash.pairs.length?`<div class="clbar">⚠ 이전 모둠과 같은 모둠원이 ${clash.pairs.length}쌍 다시 만났습니다 <button id="clGo">확인하기</button></div>`:''}
     <div class="modebar">
       <button class="mode ${mode==='q'?'on':''}" id="qBtn"><i>✎</i><b>기록하기</b><span>발표·질문 바로 +1</span></button>
       <button class="mode ${mode==='act'?'on':''}" id="actBtn"><i>✓</i><b>활동 체크</b><span>다 한 모둠 표시</span></button>
@@ -1930,7 +1937,7 @@ function renderSeat(){
     </details>`;
   const g=$('#seatGrid');
   /* 고정 크기: 교탁보기 60x40, 마주보기 40x60. 칸 60px, 이름 19px */
-  const C=c.cols,R=Math.ceil(c.seats.length/C),NM=22;
+  const C=c.cols,R=Math.ceil(c.seats.length/C),NM=26;
   g.style.display='grid';
   g.style.gap=gap+'px';
   g.style.width='max-content';
@@ -2044,7 +2051,7 @@ function renderSeat(){
     if(joinL)return`<div class="st off"></div>`;
     const gIdx=(idx!==undefined)?groupOf(ordO.gsizes,idx):-1;
     const gdone=gIdx>=0&&c.actDone&&c.actDone[gIdx];
-    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${gdone?'gdone':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'solo':''}" data-i="${idx}">
+    return`<button class="st ${n?'mark':''} ${st.n?'':'empty'} ${st.ph?'hasph':''} ${st.n&&sp>=goal?'done':''} ${gdone?'gdone':''} ${clash.idx.has(idx)?'clash':''} ${wide?'wide':'talld'} ${dr===3?'fr':''} ${dr===1?'fl':''} ${pairL?'pl':''} ${pairR?'pr2':''} ${below?'nu':''} ${joinR?'solo':''}" data-i="${idx}">
       <span class="stimg">
         ${st.ph?`<img data-ph="${st.ph}" alt="">`:''}
         ${sp?`<span class="spk">${sp}</span>`:''}
@@ -2109,24 +2116,28 @@ function renderSeat(){
     const c2=classes.find(x=>x.id===curCls);
     if(!c2)return;
     const cnt=seatOrder(c2.seats,c2.cols,c2.dirs||[]).length;
-    if(!confirm('자리를 무작위로 섞을까요?\n마음에 안 들면 다시 누르면 됩니다.'))return;
+    const hasPrev=!!(c2.prevGroups&&c2.prevGroups.length);
+    if(!confirm(hasPrev?'이전 모둠원끼리 만나지 않도록 자리를 무작위로 섞을까요?':'자리를 무작위로 섞을까요?\n마음에 안 들면 다시 누르면 됩니다.'))return;
     while(c2.students.length<cnt)c2.students.push({n:'',ph:'',notes:[]});
-    const arr=c2.students.slice(0,cnt);
+    ensureSid(c2);
     const rnd=n=>{
-      if(window.crypto&&crypto.getRandomValues){
-        const u=new Uint32Array(1);crypto.getRandomValues(u);
-        return u[0]%n;
-      }
+      if(window.crypto&&crypto.getRandomValues){const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}
       return Math.floor(Math.random()*n);
     };
-    for(let i=arr.length-1;i>0;i--){
-      const j=rnd(i+1);
-      const t=arr[i];arr[i]=arr[j];arr[j]=t;
+    const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);const t=a[i];a[i]=a[j];a[j]=t}return a};
+    const base=c2.students.slice(0,cnt),rest=c2.students.slice(cnt);
+    let best=null,bestN=1e9;
+    const tries=hasPrev?4000:1;
+    for(let t=0;t<tries&&bestN>0;t++){
+      const arr=shuffle(base.slice());
+      const n=hasPrev?clashInfo(c2,arr).pairs.length:0;
+      if(n<bestN){bestN=n;best=arr}
     }
-    c2.students=[...arr,...c2.students.slice(cnt)];
-    ensureSid(c2);c2.u=Date.now();
+    c2.students=[...best,...rest];
+    c2.u=Date.now();
     try{await set(K.cls,classes)}catch(e){toast('저장하지 못했습니다');return}
-    renderSeat();toast('뽑았습니다. 다시 뽑으려면 한 번 더.');
+    renderSeat();
+    toast(!hasPrev?'뽑았습니다. 다시 뽑으려면 한 번 더.':bestN?`겹침을 다 피하지 못했습니다 (${bestN}쌍). 붉은 학생을 직접 바꿔주세요`:'이전 모둠원이 한 명도 겹치지 않게 뽑았습니다');
   };
   $('#actBtn').onclick=()=>{
     actMode=!actMode;
@@ -2149,6 +2160,20 @@ function renderSeat(){
   ['q','act','swap'].forEach(m=>{const b=$('#'+({q:'qBtn',act:'actBtn',swap:'swapBtn'})[m]);if(b)b.onclick=()=>setSeatMode(m)});
   const ge=$('#gEnd');if(ge)ge.onclick=()=>setSeatMode('');
   const mn=$('#minBtn');if(mn)mn.onclick=()=>{qMinus=!qMinus;renderSeat()};
+  const cg=$('#clGo');if(cg)cg.onclick=()=>setSeatMode('swap');
+  const ps=$('#prevSave');if(ps)ps.onclick=async()=>{
+    if(c.prevGroups&&!confirm('지금 모둠을 새로 기억할까요? 이전에 기억한 모둠은 지워집니다.'))return;
+    c.prevGroups=curGroupsSid(c);
+    const d=new Date();c.prevAt=(d.getMonth()+1)+'/'+d.getDate();
+    c.u=Date.now();try{await set(K.cls,classes)}catch(e){}
+    renderSeat();toast('지금 모둠을 기억했습니다. 이제 자리를 바꾸세요');
+  };
+  const pc=$('#prevClear');if(pc)pc.onclick=async()=>{
+    if(!confirm('기억한 이전 모둠을 지울까요?'))return;
+    delete c.prevGroups;delete c.prevAt;c.u=Date.now();
+    try{await set(K.cls,classes)}catch(e){}
+    renderSeat();
+  };
   const ac=$('#actClear');if(ac)ac.onclick=async()=>{
     if(!confirm('파란색 표시를 모두 지울까요?'))return;
     c.actDone={};c.au=Date.now();try{await set(K.cls,classes)}catch(e){}
@@ -2360,6 +2385,31 @@ function seatOrder(seats,cols,dirs){
     order.push(...cells);
   });
   return order;
+}
+function curGroupsSid(c){
+  ensureSid(c);
+  const gs=seatOrder(c.seats,c.cols,c.dirs||[]).gsizes;
+  const out=[];let o=0;
+  gs.forEach(n=>{out.push(c.students.slice(o,o+n).filter(st=>st&&st.n).map(st=>st.sid));o+=n});
+  return out;
+}
+function clashCnt(c){return clashInfo(c).pairs.length}
+function clashInfo(c,studs){
+  const res={idx:new Set(),pairs:[]};
+  if(!c.prevGroups||!c.prevGroups.length)return res;
+  const prev={};c.prevGroups.forEach((g,gi)=>g.forEach(sid=>{prev[sid]=gi}));
+  const S=studs||c.students;
+  const gs=seatOrder(c.seats,c.cols,c.dirs||[]).gsizes;
+  let o=0;
+  gs.forEach(n=>{
+    for(let a=o;a<o+n;a++)for(let b=a+1;b<o+n;b++){
+      const A=S[a],B=S[b];
+      if(!A||!B||!A.n||!B.n)continue;
+      if(prev[A.sid]!==undefined&&prev[A.sid]===prev[B.sid]){res.idx.add(a);res.idx.add(b);res.pairs.push([A.n,B.n])}
+    }
+    o+=n;
+  });
+  return res;
 }
 function setSeatMode(m){
   const cur=qMode?'q':actMode?'act':swapMode?'swap':'';
